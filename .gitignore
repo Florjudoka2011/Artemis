@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secretos y configuración local
+.env
+.claude/settings.local.json
+
+# Tests y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.mutmut-cache
+
+# Salidas generadas por la app
+workspace/
+*.stl
+*.step
