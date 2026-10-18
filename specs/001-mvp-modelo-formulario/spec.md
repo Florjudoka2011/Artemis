@@ -149,9 +149,9 @@ compartidas consistentes.
 - **FR-010**: Los nombres de los archivos exportados DEBEN ser generados por la app, libres
   de caracteres especiales, tildes, espacios o secuencias de path traversal. El nombre de
   carpeta de cada proyecto incluye el tipo de figura y un timestamp (ej.
-  `prisma_rectangular_20261018_143022`).
-- **FR-010b**: Si ya existe una carpeta con el mismo nombre en el workspace, la app DEBE
-  preguntar a la docente antes de sobreescribir, dándole la opción de cancelar o confirmar.
+  `prisma_rectangular_20261018_143022`); si ya existe una carpeta con ese nombre, la app
+  DEBE preguntar a la docente antes de sobreescribir, dándole la opción de cancelar o
+  confirmar.
 - **FR-011**: El sistema DEBE informar el resultado de cada generación: éxito con rutas de
   archivos, o error con descripción del problema.
 - **FR-012**: Durante la construcción del sólido, el sistema DEBE mostrar un indicador
@@ -185,8 +185,8 @@ compartidas consistentes.
 - **SC-004**: El 100% de los parámetros inválidos documentados es rechazado con mensaje
   identificatorio antes de intentar construir.
 - **SC-005**: Todos los tests del MVP definidos en `docs/tests-fase1.md` (recetas T-01 a
-  T-17, Pydantic T-100 a T-108, exportación T-110 a T-113, vistas IRAM T-120 a T-124,
-  formulario T-150 a T-152) pasan en CI.
+  T-05 y T-10 a T-12, Pydantic T-100 a T-108, exportación T-110 a T-113, vistas IRAM
+  T-120 a T-124, formulario T-150 a T-152) pasan en CI.
 - **SC-006**: El modo formulario sin IA produce archivos STL bit-a-bit idénticos para los
   mismos parámetros en ejecuciones sucesivas (determinismo).
 
@@ -196,7 +196,7 @@ compartidas consistentes.
 
 ### Session 2026-10-18
 
-- Q: Cuando la docente genera el mismo modelo dos veces, ¿qué hace la app con los archivos anteriores? → A: La app pregunta antes de sobreescribir; la docente elige cancelar o confirmar.
+- Q: Cuando la docente genera el mismo modelo dos veces, ¿qué hace la app con los archivos anteriores? → A: La app pregunta antes de sobreescribir; la docente elige cancelar o confirmar. (incorporado en FR-010)
 - Q: Mientras la app construye el sólido, ¿necesita mostrar indicador visual de progreso? → A: Sí, mostrar mensaje "Generando…" o spinner; interfaz bloqueada hasta completar.
 - Q: ¿El log JSON por pedido (exigido por la constitución) está en el alcance del MVP? → A: No; se difiere a cuando se integre el conector de IA.
 

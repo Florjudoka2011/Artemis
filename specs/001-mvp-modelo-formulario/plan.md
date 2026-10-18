@@ -93,9 +93,8 @@ src/
 tests/
 ├── conftest.py
 ├── unit/
-│   ├── test_recipes_prisma.py    # T-01 a T-09
-│   ├── test_recipes_cilindro.py  # T-10 a T-14
-│   ├── test_recipes_prisma_cuad.py # T-15 a T-18
+│   ├── test_recipes_prisma.py    # T-01 a T-09 (MVP: T-01 a T-05)
+│   ├── test_recipes_cilindro.py  # T-10 a T-14 (MVP: T-10 a T-12)
 │   └── test_schemas.py           # T-100 a T-108
 ├── integration/
 │   ├── test_export.py            # T-110 a T-115
@@ -106,7 +105,8 @@ tests/
 docs/
 ├── evidencia/fase1/              # salida de pytest --tb=short -v
 ├── ADR/
-│   └── 001-modelo-ia.md          # (Tarea 0 — antes de arrancar)
+│   ├── 001-entorno.md            # (Tarea 0 — validación de entorno; MVP)
+│   └── 001-modelo-ia.md          # (Fase 1 completa — elección del modelo de IA)
 └── trazabilidad.md               # generado por script
 ```
 

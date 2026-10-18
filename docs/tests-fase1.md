@@ -224,7 +224,7 @@
 
 Los siguientes tests deben pasar para considerar el MVP completo:
 
-**Recetas**: T-01, T-02, T-03, T-04, T-05, T-10, T-11, T-12, T-15, T-16, T-17
+**Recetas**: T-01, T-02, T-03, T-04, T-05, T-10, T-11, T-12
 
 **Pydantic**: T-100, T-101, T-102, T-103, T-104, T-105, T-107, T-108
 
