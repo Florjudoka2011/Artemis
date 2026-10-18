@@ -23,10 +23,10 @@ Resultado de cada ítem registrado en `docs/ADR/001-entorno.md`.
 **⚠️ CRÍTICO**: Nada del resto del proyecto puede comenzar hasta que esta fase esté completa
 y sus resultados estén registrados.
 
-- [ ] T001 Validar que Python 3.11 + CadQuery + Gradio funcionan juntos en Windows 11 sin conflictos de versiones — registrar versiones exactas en docs/ADR/001-entorno.md
-- [ ] T002 [P] Validar que cairosvg (o alternativa: svglib+reportlab) convierte SVG a PNG en Windows 11 sin DLLs externas problemáticas — registrar decisión en docs/ADR/001-entorno.md
-- [ ] T003 [P] Confirmar ruta de workspace (ej. C:\Artemis\) fuera de OneDrive, sin espacios ni tildes, con permisos de escritura — registrar en docs/ADR/001-entorno.md
-- [ ] T004 Consolidar todos los resultados de Tarea 0 en docs/ADR/001-entorno.md con: versiones confirmadas, librería SVG→PNG elegida, ruta workspace, resultado de cada ítem validado
+- [X] T001 Validar que Python 3.11 + CadQuery + Gradio funcionan juntos en Windows 11 sin conflictos de versiones — registrar versiones exactas en docs/ADR/001-entorno.md
+- [X] T002 [P] Validar que cairosvg (o alternativa: svglib+reportlab) convierte SVG a PNG en Windows 11 sin DLLs externas problemáticas — registrar decisión en docs/ADR/001-entorno.md
+- [X] T003 [P] Confirmar ruta de workspace (ej. C:\Artemis\) fuera de OneDrive, sin espacios ni tildes, con permisos de escritura — registrar en docs/ADR/001-entorno.md
+- [X] T004 Consolidar todos los resultados de Tarea 0 en docs/ADR/001-entorno.md con: versiones confirmadas, librería SVG→PNG elegida, ruta workspace, resultado de cada ítem validado
 
 **Checkpoint**: Tarea 0 completa — entorno validado, ADR escrito. Recién ahora comienza el desarrollo.
 
@@ -80,7 +80,7 @@ Sin agujero, sin vistas. Generación < 10 s con indicador "Generando…".
 - [ ] T014 [P] [US1] Escribir tests T-01, T-02, T-03 en tests/unit/test_recipes_prisma.py: nominal (largo=100,ancho=60,alto=40 → volumen=240000 mm³ isclose rel_tol=1e-6), parámetro=0, parámetro negativo — marcar `@pytest.mark.mvp`; docstrings `T-01 | 001/FR-004`, `T-02 | 001/FR-005`, `T-03 | 001/FR-005`
 - [ ] T015 [P] [US1] Escribir test T-10 en tests/unit/test_recipes_cilindro.py: nominal (diámetro=50,alto=80 → volumen=157079.633 mm³ isclose rel_tol=1e-6) — marcar `@pytest.mark.mvp`; docstring `T-10 | 001/FR-004`
 - [ ] T016 [P] [US1] Escribir tests T-110, T-111 en tests/integration/test_export.py: STL genera archivo > 0 bytes con volumen dentro de ±0.5% del teórico; STEP genera archivo > 0 bytes — marcar `@pytest.mark.mvp`; docstrings `T-110 | 001/FR-006`, `T-111 | 001/FR-006`
-- [ ] T017 [P] [US1] Escribir tests T-150, T-151, T-152 en tests/e2e/test_formulario.py usando conector falso (fixture que devuelve JSON fijo): T-150 mismo hash STL; T-151 campo vacío lista faltantes; T-152 IA deshabilitada arranca vacío — marcar `@pytest.mark.mvp`
+- [ ] T017 [P] [US1] Escribir tests T-150, T-151, T-152 en tests/e2e/test_formulario.py usando conector falso (fixture que devuelve JSON fijo): T-150 mismo hash STL; T-151 campo vacío lista faltantes; T-152 IA deshabilitada arranca vacío — marcar `@pytest.mark.mvp`; docstrings `T-150 | 001/FR-009`, `T-151 | 001/FR-001 | 001/FR-005`, `T-152 | 001/FR-009`
 
 ### Implementación US1
 
@@ -135,7 +135,7 @@ en disposición normalizada ISO E, exportable también como PNG.
 - [ ] T031 [US3] Implementar src/export/views.py: `exportar_svg(vistas_svg, path)` y `svg_a_png(svg_path, png_path)` usando la librería validada en T002 — hasta que T-112, T-113 pasen
 - [ ] T032 [US3] Agregar opción "vistas IRAM" al formulario en src/ui/app.py (checkbox; si marcado: generar y mostrar rutas SVG y PNG en panel de resultado — FR-003, FR-007, FR-008)
 
-**Checkpoint**: `pytest -m mvp -v` — todos los tests del MVP verdes (T-01 a T-17, T-100 a T-108, T-110 a T-113, T-120 a T-124, T-150 a T-152).
+**Checkpoint**: `pytest -m mvp -v` — todos los tests del MVP verdes (T-01 a T-05 y T-10 a T-12, T-100 a T-108, T-110 a T-113, T-120 a T-124, T-150 a T-152).
 
 ---
 
@@ -143,7 +143,8 @@ en disposición normalizada ISO E, exportable también como PNG.
 
 **Purpose**: Cierre del MVP con evidencia verificable y trazabilidad completa.
 
-- [ ] T033 [P] Ejecutar suite completa del MVP y guardar evidencia en docs/evidencia/fase1/: `pytest -m mvp --tb=short -v --cov=src --cov-report=term-missing` — cobertura de src/recipes/ y src/schemas/ al 100%
+- [ ] T033 [P] Escribir test de rendimiento T-SC001 en tests/unit/test_recipes_prisma.py: verificar que construir prisma (100×60×40) + exportar STL completa en < 10 s (SC-001); marcar `@pytest.mark.perf` (excluido de CI; ejecutar manualmente con `pytest -m perf -v`) — docstring `T-SC001 | 001/SC-001`
+- [ ] T033b [P] Ejecutar suite completa del MVP y guardar evidencia en docs/evidencia/fase1/: `pytest -m mvp --tb=short -v --cov=src --cov-report=term-missing` — cobertura de src/recipes/ y src/schemas/ al 100%
 - [ ] T034 [P] Ejecutar tests de mutación sobre recetas: `mutmut run --paths-to-mutate src/recipes/`; documentar supervivientes en docs/evidencia/fase1/mutmut-YYYYMMDD.txt; supervivientes = 0 para considerar las recetas terminadas
 - [ ] T035 Generar matriz trazabilidad docs/trazabilidad.md con script (requisito R-XX → tarea T-XXX → test T-XX); verificar que no hay requisitos sin test
 - [ ] T036 [P] Verificar que ruff no reporta eval/exec en src/: `ruff check src/ --select S307,S102` debe salir con código 0
