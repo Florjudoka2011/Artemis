@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "artemis"
+version = "0.1.0"
+description = "Generador de modelos 3D paramétricos para docentes de dibujo técnico"
+requires-python = ">=3.12"
+dependencies = [
+    "cadquery>=2.8.0",
+    "pydantic>=2.0",
+    "gradio>=4.0",
+    "skia-python>=144.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "mutmut>=2.4",
+    "ruff>=0.6",
+    "pre-commit>=3.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+# ── pytest ──────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'mvp and not perf'"
+markers = [
+    "mvp: Tests del MVP — requeridos para el primer hito demostrable",
+    "perf: Tests de rendimiento — ejecutar manualmente fuera de CI",
+]
+
+# ── ruff ────────────────────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "S"]
+# S307 = uso de eval(); S102 = uso de exec() — ambos prohibidos en src/
+extend-select = ["S307", "S102"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]      # tests pueden usar assert sin S-rules
+"scripts/*" = ["S603", "S607"]  # scripts internos usan subprocess con inputs controlados
+
+# ── coverage ────────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "scripts/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90

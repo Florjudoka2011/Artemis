@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+env/
 
 # Secretos y configuración local
 .env
@@ -14,7 +15,27 @@ venv/
 htmlcov/
 .mutmut-cache
 
+# Build / dist
+dist/
+build/
+*.egg-info/
+
+# Evidencia de tests — versionada para trazabilidad del arnés anti-mentiras
+# docs/evidencia/ está bajo control de versiones (no ignorada)
+
 # Salidas generadas por la app
 workspace/
 *.stl
 *.step
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
