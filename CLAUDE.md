@@ -33,6 +33,17 @@ El orden es fijo e innegociable:
 
 No existe ninguna circunstancia en que la implementación se escriba antes del test.
 
+### 5. Nunca usar --no-verify
+
+`git commit --no-verify` y `git push --no-verify` están **prohibidos**.
+
+Bypasean todos los hooks (ruff, gitleaks, format, secrets) y destruyen la trazabilidad
+del arnés anti-mentiras. No existe circunstancia que lo justifique.
+
+Si un hook falla legítimamente (ej: `no-commit-to-branch` por política de rama),
+usar `SKIP=hook-id` para saltear ÚNICAMENTE ese hook nombrado, nunca `--no-verify`.
+Documentar el motivo en el mensaje del commit.
+
 ### 4. No hacer afirmaciones técnicas sin verificación
 
 No afirmar el comportamiento de ninguna librería (Pydantic, CadQuery, skia-python,
