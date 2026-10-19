@@ -1,0 +1,79 @@
+# CLAUDE.md — Reglas de trabajo para Artemis
+
+Este archivo define reglas no negociables para la IA que asiste en este proyecto.
+Se aplican en toda sesión, sin excepción.
+
+---
+
+## Reglas del arnés anti-mentiras
+
+### 1. Evidencia antes de cerrar una tarea
+
+Antes de marcar una tarea como completada (`[X]` en tasks.md), ejecutar:
+
+```
+.venv\Scripts\python.exe scripts/evidencia.py
+```
+
+Verificar que no haya fallos. Si alguna etapa falla, la tarea NO está completa.
+
+### 2. Nunca afirmar que los tests pasan sin haberlos ejecutado
+
+Toda afirmación de la forma "los tests pasan", "16/16 passed", "0 fallos" debe ir
+acompañada de la salida real del comando. Citar el número de tests, la línea de resumen
+(`N passed in X.XXs`) y la fecha/hora de ejecución.
+
+### 3. Tests antes que implementación (TDD estricto)
+
+El orden es fijo e innegociable:
+1. Escribir el test → confirmarlo en ROJO (falla con ImportError o AssertionError)
+2. Commitear los tests en rojo
+3. Implementar hasta que el test pase
+4. Commitear la implementación con los tests en verde
+
+No existe ninguna circunstancia en que la implementación se escriba antes del test.
+
+### 4. No hacer afirmaciones técnicas sin verificación
+
+No afirmar el comportamiento de ninguna librería (Pydantic, CadQuery, skia-python,
+etc.) sin respaldarlo con:
+- Un test que lo demuestre (preferido), o
+- Una cita directa de la documentación oficial con URL.
+
+Ejemplo incorrecto: "Pydantic rechaza NaN por defecto."
+Ejemplo correcto: "Según el test `test_pydantic_v2_acepta_nan_sin_validator`
+(tests/unit/test_pydantic_nan_behavior.py), Pydantic v2 acepta NaN sin validator
+explícito. Por eso se usa `math.isfinite()` en los schemas."
+
+---
+
+## Stack y decisiones de entorno
+
+Ver `docs/ADR/001-entorno.md` para las decisiones de entorno validadas.
+
+- Python: 3.12.0
+- CadQuery: 2.8.0
+- Pydantic: v2 (acepta NaN/inf por defecto — usar `math.isfinite()` explícito)
+- SVG→PNG: skia-python 144.0 (cairosvg falla en Windows sin libcairo-2.dll)
+- Workspace: `C:\Artemis\`
+
+---
+
+## Comandos útiles
+
+```bash
+# Correr suite MVP
+.venv\Scripts\python.exe -m pytest -m mvp -v
+
+# Correr evidencia completa
+.venv\Scripts\python.exe scripts/evidencia.py
+
+# Generar trazabilidad
+.venv\Scripts\python.exe scripts/gen_traceability.py
+
+# Mutación manual
+.venv\Scripts\python.exe scripts/mutacion_manual.py
+
+# Lint
+.venv\Scripts\python.exe -m ruff check src/
+```
