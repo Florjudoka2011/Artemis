@@ -119,6 +119,13 @@ def test_valor_nan_agujero_diametro():
         AgujeroParams(diametro=math.nan, cara=CaraAgujero.superior)
 
 
+@pytest.mark.mvp
+def test_valor_nan_cilindro():
+    """T-104 | 001/FR-005 — NaN en CilindroParams es rechazado."""
+    with pytest.raises(ValidationError):
+        CilindroParams(diametro=math.nan, alto=80)
+
+
 # ── T-105: valor = 0 ─────────────────────────────────────────────────────────
 
 

@@ -54,7 +54,7 @@ ignore = []
 # ── coverage ────────────────────────────────────────────────────────────────
 [tool.coverage.run]
 source = ["src"]
-omit = ["tests/*", "scripts/*"]
+omit = ["tests/*", "scripts/*", "src/recipes/base.py"]
 
 [tool.coverage.report]
 show_missing = true

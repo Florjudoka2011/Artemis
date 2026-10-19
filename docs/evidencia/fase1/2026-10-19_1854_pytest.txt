@@ -1,0 +1,31 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-9.1.1, pluggy-1.7.0 -- D:\Proyecto\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Proyecto
+configfile: pyproject.toml
+testpaths: tests
+plugins: platformdirs-4.13.5
+collecting ... collected 19 items
+
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_nan_sin_validator PASSED [  5%]
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_inf_sin_validator PASSED [ 10%]
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_neg_inf_sin_validator PASSED [ 15%]
+tests/unit/test_schemas.py::test_prisma_valido_completo PASSED           [ 21%]
+tests/unit/test_schemas.py::test_cilindro_valido_completo PASSED         [ 26%]
+tests/unit/test_schemas.py::test_campo_faltante_prisma PASSED            [ 31%]
+tests/unit/test_schemas.py::test_campo_faltante_cilindro PASSED          [ 36%]
+tests/unit/test_schemas.py::test_tipo_incorrecto_largo PASSED            [ 42%]
+tests/unit/test_schemas.py::test_valor_negativo_largo PASSED             [ 47%]
+tests/unit/test_schemas.py::test_valor_negativo_diametro PASSED          [ 52%]
+tests/unit/test_schemas.py::test_valor_nan PASSED                        [ 57%]
+tests/unit/test_schemas.py::test_valor_infinito PASSED                   [ 63%]
+tests/unit/test_schemas.py::test_valor_nan_agujero_diametro PASSED       [ 68%]
+tests/unit/test_schemas.py::test_valor_cero_alto PASSED                  [ 73%]
+tests/unit/test_schemas.py::test_valor_cero_diametro_agujero PASSED      [ 78%]
+tests/unit/test_schemas.py::test_campo_extra_prisma PASSED               [ 84%]
+tests/unit/test_schemas.py::test_campo_extra_agujero PASSED              [ 89%]
+tests/unit/test_schemas.py::test_figura_tipo_desconocida PASSED          [ 94%]
+tests/unit/test_schemas.py::test_cara_agujero_desconocida PASSED         [100%]
+
+- generated xml file: D:\Proyecto\docs\evidencia\fase1\2026-10-19_1854_junit.xml -
+============================= 19 passed in 0.42s ==============================
