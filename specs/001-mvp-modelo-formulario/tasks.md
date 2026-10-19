@@ -36,14 +36,14 @@ y sus resultados estén registrados.
 
 **Purpose**: Estructura de directorios, herramientas y configuración base.
 
-- [ ] T005 Crear estructura de directorios completa según plan.md: src/recipes/, src/schemas/, src/export/, src/views_iram/, src/ui/, tests/unit/, tests/integration/, tests/e2e/, docs/evidencia/fase1/, docs/ADR/
-- [ ] T006 Crear pyproject.toml con Python 3.11, CadQuery, Pydantic v2, Gradio, pytest, pytest-cov, mutmut; incluir marker `mvp` en `[tool.pytest.ini_options]`
-- [ ] T007 [P] Configurar ruff en pyproject.toml con reglas S307 (eval) y S102 (exec) habilitadas para src/
-- [ ] T008 [P] Configurar pre-commit + gitleaks en .pre-commit-config.yaml
-- [ ] T009 Crear __init__.py en src/ y todos sus subdirectorios (recipes, schemas, export, views_iram, ui)
-- [ ] T010 Crear tests/conftest.py con fixture `workspace_tmp` que crea y limpia un directorio temporal para cada test de exportación
-- [ ] T010b [P] Crear .github/workflows/ci.yml: ejecutar `pytest -m mvp --tb=short -v` en Python 3.11 en Ubuntu (para CI); agregar marker `perf` en pyproject.toml (excluido de CI: `addopts = "-m 'mvp and not perf'"`)
-- [ ] T010c [P] Escribir scripts/gen_traceability.py: leer docstrings de tests/ buscando patrón `T-XX | 001/FR-XX`, generar docs/trazabilidad.md con columnas Test ID | Feature ID | Archivo | Estado — necesario para la tarea T035
+- [X] T005 Crear estructura de directorios completa según plan.md: src/recipes/, src/schemas/, src/export/, src/views_iram/, src/ui/, tests/unit/, tests/integration/, tests/e2e/, docs/evidencia/fase1/, docs/ADR/
+- [X] T006 Crear pyproject.toml con Python 3.12, CadQuery, Pydantic v2, Gradio, skia-python, pytest, pytest-cov, mutmut; incluir markers `mvp` y `perf` en `[tool.pytest.ini_options]`
+- [X] T007 [P] Configurar ruff en pyproject.toml con reglas S307 (eval) y S102 (exec) habilitadas para src/
+- [X] T008 [P] Configurar pre-commit + gitleaks en .pre-commit-config.yaml; completar .gitignore
+- [X] T009 Crear __init__.py en src/ y todos sus subdirectorios (recipes, schemas, export, views_iram, ui)
+- [X] T010 Crear tests/conftest.py con fixture `workspace_tmp` que crea y limpia un directorio temporal para cada test de exportación
+- [X] T010b [P] Crear .github/workflows/ci.yml: ejecutar `pytest -m mvp --tb=short -v` en Python 3.12 en Ubuntu (para CI); marker `perf` excluido de CI via `addopts`
+- [X] T010c [P] Escribir scripts/gen_traceability.py: leer docstrings de tests/ buscando patrón `T-XX | 001/FR-XX`, generar docs/trazabilidad.md con columnas Test ID | Feature ID | Archivo | Función
 
 **Checkpoint**: Setup completo — `python -m pytest --collect-only` no da errores de importación; `gh workflow list` muestra ci.yml.
 
@@ -57,12 +57,12 @@ y sus resultados estén registrados.
 
 ### Tests Foundational (escribir PRIMERO — deben FALLAR antes de implementar)
 
-- [ ] T011 Escribir tests T-100 a T-108 en tests/unit/test_schemas.py: JSON válido completo, campo faltante, tipo incorrecto, valor negativo, NaN/inf, valor=0, campo extra (extra="forbid"), figura desconocida, cara desconocida — docstring de cada test: `T-1XX | 001/FR-005` — verificar que FALLAN antes de implementar
+- [X] T011 Escribir tests T-100 a T-108 en tests/unit/test_schemas.py: JSON válido completo, campo faltante, tipo incorrecto, valor negativo, NaN/inf, valor=0, campo extra (extra="forbid"), figura desconocida, cara desconocida — docstring de cada test: `T-1XX | 001/FR-005` — verificar que FALLAN antes de implementar
 
 ### Implementación Foundational
 
-- [ ] T012 Implementar src/schemas/figuras.py: FiguraTipo, CaraAgujero, AgujeroParams, PrismaRectangularParams, CilindroParams — todos con `extra="forbid"`, validators > 0 — hasta que T-100 a T-108 pasen
-- [ ] T013 [P] Implementar src/recipes/base.py con protocolo Receta (Protocol): firma `__call__(params: BaseModel) -> cq.Workplane`, docstring con contrato de comportamiento
+- [X] T012 Implementar src/schemas/figuras.py: FiguraTipo, CaraAgujero, AgujeroParams, PrismaRectangularParams, CilindroParams — todos con `extra="forbid"`, validators > 0 — hasta que T-100 a T-108 pasen
+- [X] T013 [P] Implementar src/recipes/base.py con protocolo Receta (Protocol): firma `__call__(params: BaseModel) -> cq.Workplane`, docstring con contrato de comportamiento
 
 **Checkpoint**: `pytest tests/unit/test_schemas.py -v` — T-100 a T-108 todos verdes.
 
@@ -143,6 +143,11 @@ en disposición normalizada ISO E, exportable también como PNG.
 
 **Purpose**: Cierre del MVP con evidencia verificable y trazabilidad completa.
 
+- [X] T037 [P] Guardar script de mutación manual en scripts/mutacion_manual.py con docstring — reproducir M2 survivor y guardar evidencia en docs/evidencia/fase1/mutacion-schemas-antes.txt y mutacion-schemas-despues.txt
+- [X] T038 [P] Escribir test T-109 en tests/unit/test_pydantic_nan_behavior.py: verificar que Pydantic v2 acepta NaN e inf sin validator explícito — documenta por qué math.isfinite() es necesario — docstring `T-109 | 001/FR-005`
+- [X] T039 [P] Crear scripts/evidencia.py: ejecuta pytest + cobertura + mutación + trazabilidad, guarda salidas en docs/evidencia/fase1/ con timestamp AAAA-MM-DD_HHMM_tipo.txt
+- [X] T040 [P] Agregar hook gen-traceability a .pre-commit-config.yaml; actualizar .github/workflows/ci.yml con mutmut y artefactos
+- [X] T041 Crear CLAUDE.md con reglas del arnés anti-mentiras: ejecutar evidencia.py antes de marcar tarea completa; nunca afirmar tests pasan sin output real; TDD estricto; no afirmar comportamiento de librerías sin test/doc
 - [ ] T033 [P] Escribir test de rendimiento T-SC001 en tests/unit/test_recipes_prisma.py: verificar que construir prisma (100×60×40) + exportar STL completa en < 10 s (SC-001); marcar `@pytest.mark.perf` (excluido de CI; ejecutar manualmente con `pytest -m perf -v`) — docstring `T-SC001 | 001/SC-001`
 - [ ] T033b [P] Ejecutar suite completa del MVP y guardar evidencia en docs/evidencia/fase1/: `pytest -m mvp --tb=short -v --cov=src --cov-report=term-missing` — cobertura de src/recipes/ y src/schemas/ al 100%
 - [ ] T034 [P] Ejecutar tests de mutación sobre recetas: `mutmut run --paths-to-mutate src/recipes/`; documentar supervivientes en docs/evidencia/fase1/mutmut-YYYYMMDD.txt; supervivientes = 0 para considerar las recetas terminadas
