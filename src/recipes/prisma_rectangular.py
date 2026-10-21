@@ -12,9 +12,9 @@ from src.schemas.figuras import PrismaRectangularParams
 def construir(params: PrismaRectangularParams) -> cq.Workplane:
     """Construye el prisma rectangular a partir de parámetros validados.
 
-    Agujero: pendiente (tests T-04..T-09, Fase 1A).
+    Agujero: T-04/T-05 son US2 (Phase 4); T-06..T-09 son Fase 1A completa.
     """
     if params.agujero is not None:
-        raise NotImplementedError("Agujero en prisma: pendiente (Fase 1A, tests T-04..T-09)")
+        raise NotImplementedError("Agujero en prisma: T-04/T-05=US2 Phase4; T-06..T-09=Fase1A")
 
     return cq.Workplane("XY").box(params.largo, params.ancho, params.alto)

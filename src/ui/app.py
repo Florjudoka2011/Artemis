@@ -18,6 +18,7 @@ def generar(
     alto: str = "",
     diametro: str = "",
     figura: str = "prisma_rectangular",
+    vistas_iram: bool = False,
 ) -> str:
     """Valida los parámetros del formulario y construye el sólido.
 
@@ -103,12 +104,15 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             alto = gr.Textbox(label="Alto (mm)", value="")
             diametro = gr.Textbox(label="Diámetro (mm)", value="")
 
+        with gr.Row():
+            vistas_iram = gr.Checkbox(label="Vistas IRAM", value=False)
+
         btn = gr.Button("Generar", variant="primary")
         salida = gr.Textbox(label="Resultado", interactive=False)
 
         btn.click(
             fn=generar,
-            inputs=[largo, ancho, alto, diametro, figura],
+            inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
             outputs=salida,
         )
 
