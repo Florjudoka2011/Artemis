@@ -134,6 +134,20 @@ de `src/recipes/` y `src/schemas/` al 100%, sin líneas no cubiertas en rutas de
 
 ---
 
+## Indicador "Generando…" (FR-012) — Verificación manual
+
+El bloqueo de UI durante la generación lo provee Gradio automáticamente (`btn.click` deshabilita
+el botón y muestra un spinner). No existe API Python para afirmar el estado visual en tests.
+
+**Validar manualmente**:
+1. Lanzar la app: `.venv\Scripts\python.exe -c "from src.ui.app import crear_interfaz; crear_interfaz().launch()"`
+2. Completar los campos del formulario con valores válidos (ej. largo=100, ancho=60, alto=40).
+3. Hacer click en **Generar**.
+4. **Resultado esperado**: el botón se bloquea (gris, no clickeable) mientras el sólido se construye.
+5. Al terminar, el botón vuelve a estar activo y el campo "Resultado" muestra las rutas generadas.
+
+---
+
 ## Conflicto de overwrite (FR-010b)
 
 **Validar manualmente** (no hay test automatizado para la interacción UI):

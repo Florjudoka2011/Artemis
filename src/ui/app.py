@@ -105,7 +105,12 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             diametro = gr.Textbox(label="Diámetro (mm)", value="")
 
         with gr.Row():
-            vistas_iram = gr.Checkbox(label="Vistas IRAM", value=False)
+            vistas_iram = gr.Checkbox(
+                label="Vistas IRAM",
+                value=False,
+                interactive=False,
+                info="Disponible en Phase 5 (US3)",
+            )
 
         btn = gr.Button("Generar", variant="primary")
         salida = gr.Textbox(label="Resultado", interactive=False)

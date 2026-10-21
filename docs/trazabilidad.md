@@ -28,8 +28,11 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-154 | 001/FR-011 | tests/e2e/test_formulario.py | `test_generar_prisma_valido_produce_archivos` |
 | T-155 | 001/FR-004 | tests/e2e/test_formulario.py | `test_generar_cilindro_valido_produce_archivos` |
 | T-156 | 001/FR-003 | tests/e2e/test_formulario.py | `test_formulario_tiene_checkbox_vistas_iram` |
-| T-157 | 001/FR-012 | tests/e2e/test_formulario.py | `test_interfaz_tiene_indicador_generando` |
 | T-158 | 001/FR-003 | tests/e2e/test_formulario.py | `test_generar_acepta_vistas_iram` |
+| T-159 | 001/FR-005 | tests/e2e/test_formulario.py | `test_generar_prisma_parametro_invalido_retorna_error` |
+| T-160 | 001/FR-001 | tests/e2e/test_formulario.py | `test_formulario_cilindro_campo_vacio` |
+| T-161 | 001/FR-005 | tests/e2e/test_formulario.py | `test_generar_cilindro_parametro_invalido_retorna_error` |
+| T-162 | 001/FR-001 | tests/e2e/test_formulario.py | `test_generar_figura_desconocida_retorna_error` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -40,6 +43,6 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 35
+**Total tests trazados**: 38
 **Feature IDs cubiertos**: 9
 

@@ -145,22 +145,67 @@ def test_generar_acepta_vistas_iram():
     ), f"generar() rechazó vistas_iram=False: {resultado}"
 
 
+# T-157 / FR-012 eliminado: el indicador "Generando..." es comportamiento automatico de
+# Gradio (btn.click bloquea la UI sin codigo nuestro). No hay API Python para afirmar
+# el estado visual de carga. Verificacion manual en quickstart.md.
+
+
 @pytest.mark.mvp
-def test_interfaz_tiene_indicador_generando():
-    """T-157 | 001/FR-012 — La interfaz bloquea el botón mientras genera (indicador Generando…).
+def test_generar_prisma_parametro_invalido_retorna_error():
+    """T-159 | 001/FR-005 — generar() con valor cero en prisma retorna mensaje de error.
 
-    Prueba: src/ui/app.py::crear_interfaz
+    Prueba: src/ui/app.py::generar
 
-    El botón de generación debe tener variant='primary' para indicar acción principal.
-    El bloqueo de interfaz durante btn.click() lo provee Gradio automáticamente.
-    La función generar() debe retornar un mensaje con el resultado (éxito o error),
-    no None, para que Gradio actualice la UI al terminar.
+    largo=0 pasa la validacion de campo vacio pero ValidationError en Pydantic;
+    la funcion debe capturarlo y retornar "Error de validacion: ...".
     """
-    demo = crear_interfaz(conector_ia=None)
-    # Verificar que el botón existe y tiene la configuración correcta
-    botones = [c for c in demo.blocks.values() if type(c).__name__ == "Button"]
-    assert len(botones) >= 1, "La interfaz no tiene ningún botón"
-    variantes = [getattr(b, "variant", None) for b in botones]
+    resultado = generar(largo="0", ancho="60", alto="40", figura="prisma_rectangular")
+    assert "Error" in resultado, f"Se esperaba mensaje de error con largo=0, obtenido: {resultado}"
+
+
+@pytest.mark.mvp
+@pytest.mark.parametrize(
+    "kwargs,campo_faltante",
+    [
+        ({"diametro": "", "alto": "80", "figura": "cilindro"}, "diametro"),
+        ({"diametro": "50", "alto": "", "figura": "cilindro"}, "alto"),
+    ],
+)
+def test_formulario_cilindro_campo_vacio(kwargs, campo_faltante):
+    """T-160 | 001/FR-001 — Formulario cilindro con campo vacio no genera y lista los faltantes.
+
+    Prueba: src/ui/app.py::generar
+
+    El resultado debe indicar que el campo obligatorio falta.
+    """
+    resultado = generar(**kwargs)
     assert (
-        "primary" in variantes
-    ), f"Ningún botón tiene variant='primary' (indicador de acción principal): {variantes}"
+        campo_faltante in resultado.lower()
+    ), f"Se esperaba '{campo_faltante}' en el mensaje, obtenido: {resultado}"
+
+
+@pytest.mark.mvp
+def test_generar_cilindro_parametro_invalido_retorna_error():
+    """T-161 | 001/FR-005 — generar() con diametro=0 en cilindro retorna mensaje de error.
+
+    Prueba: src/ui/app.py::generar
+
+    diametro=0 pasa la validacion de campo vacio pero ValidationError en Pydantic;
+    la funcion debe capturarlo y retornar "Error de validacion: ...".
+    """
+    resultado = generar(diametro="0", alto="80", figura="cilindro")
+    assert (
+        "Error" in resultado
+    ), f"Se esperaba mensaje de error con diametro=0, obtenido: {resultado}"
+
+
+@pytest.mark.mvp
+def test_generar_figura_desconocida_retorna_error():
+    """T-162 | 001/FR-001 — generar() con figura desconocida retorna mensaje de error.
+
+    Prueba: src/ui/app.py::generar
+    """
+    resultado = generar(figura="hexagono")
+    assert (
+        "desconocida" in resultado.lower() or "Error" in resultado
+    ), f"Se esperaba mensaje de error con figura desconocida, obtenido: {resultado}"
