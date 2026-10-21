@@ -64,7 +64,9 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-216 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_incluye_tests_sin_prueba` |
 | T-217 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_comparacion_usa_id_completo_no_bare` |
 | T-218 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_funcion_bajo_test_rechaza_ruta_fuera_del_repo` |
+| T-219 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_requisito_bare_id_una_sola_spec_completa_prefijo` |
+| T-220 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_requisito_bare_id_multiples_specs_pide_prefijo` |
 
-**Total tests trazados**: 60
+**Total tests trazados**: 62
 **Feature IDs cubiertos**: 7
 

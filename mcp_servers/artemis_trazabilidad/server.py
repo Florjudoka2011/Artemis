@@ -48,14 +48,14 @@ def funcion_bajo_test(id: str) -> dict:
 def requisito(id: str) -> dict:
     """Devuelve el texto del requisito en specs/ y la lista de tests que lo cubren.
 
-    Ejemplo: requisito("FR-005")
+    Ejemplo: requisito("001/FR-005")
     """
     return _requisito(req_id=id)
 
 
 @mcp.tool()
 def estado_tareas() -> dict:
-    """Devuelve las tareas de tasks.md agrupadas en hechas, pendientes y bloqueadas."""
+    """Devuelve las tareas de tasks.md agrupadas en hechas y pendientes."""
     return _estado_tareas()
 
 

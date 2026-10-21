@@ -215,7 +215,9 @@ def _bare_fr(req_id: str) -> str:
 def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
     """Devuelve el texto del requisito en specs/ y los tests que lo cubren.
 
-    Acepta 'NNN/FR-XXX' (busca solo en la spec NNN) o 'FR-XXX' (busca en todas).
+    Acepta 'NNN/FR-XXX' (busca solo en la spec NNN) o 'FR-XXX':
+      - Si hay una sola spec, autocompleta el prefijo (ej. '001/FR-005').
+      - Si hay múltiples specs, devuelve error pidiendo especificar el prefijo.
     Coincidencia exacta: 'FR-005' no coincide con 'FR-0050'.
     Detecta el formato Spec Kit: '- **FR-XXX**: texto'.
     """
@@ -226,6 +228,25 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
 
     spec_prefix = _spec_prefix_from_req_id(req_id)
     bare = _bare_fr(req_id)
+
+    # Sin prefijo: autocompletar si hay una sola spec, error si hay más de una
+    if not spec_prefix:
+        all_specs = sorted(specs_dir.rglob("spec.md"))
+        if len(all_specs) == 1:
+            # Extraer prefijo de la única spec y reescribir req_id
+            folder = all_specs[0].relative_to(specs_dir).parts[0]
+            spec_prefix = folder.split("-")[0] if "-" in folder else folder
+            req_id = f"{spec_prefix}/{bare}"
+        elif len(all_specs) > 1:
+            spec_names = [s.relative_to(specs_dir).parts[0] for s in all_specs]
+            examples = "/".join([f"{n.split('-')[0]}/{bare}" for n in spec_names[:2]])
+            return {
+                "encontrado": False,
+                "error": (
+                    f"Hay {len(all_specs)} specs ({', '.join(spec_names)}). "
+                    f"Especificá el prefijo, ej: '{examples.split('/')[0]}/{bare}'"
+                ),
+            }
 
     texto = None
     archivo_req = None
