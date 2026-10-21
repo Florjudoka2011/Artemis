@@ -115,17 +115,23 @@
 
 ## Tests de validación de JSON (Pydantic)
 
+> Regla A-01: cada ID es único. T-100a/T-100b usan sufijo de letra porque sus assertions
+> difieren (campo `agujero`/`vistas_iram` en prisma vs campos propios de cilindro).
+> T-101, T-103, T-104, T-105, T-106 y T-109 usan `@pytest.mark.parametrize`.
+
 | ID | Caso | Resultado esperado |
 |---|---|---|
-| T-100 | JSON válido completo | Pasa validación, llega a la receta |
-| T-101 | Campo obligatorio faltante | Rechazado con campo identificado |
+| T-100a | JSON válido completo — prisma | Pasa validación; `agujero=None`, `vistas_iram=False` |
+| T-100b | JSON válido completo — cilindro | Pasa validación; campos numéricos correctos |
+| T-101 | Campo obligatorio faltante (prisma y cilindro) | Rechazado con campo identificado (parametrize) |
 | T-102 | Tipo incorrecto (string en campo numérico) | Rechazado con campo identificado |
-| T-103 | Valor negativo en campo numérico | Rechazado con campo identificado |
-| T-104 | Valor NaN o infinito | Rechazado antes de construir |
-| T-105 | Valor fuera de rango (ej. diámetro=0) | Rechazado con campo identificado |
-| T-106 | Campos extra no definidos en el esquema | Rechazado con campo identificado (Pydantic configurado con `extra="forbid"`) |
+| T-103 | Valor negativo en campo numérico (prisma y cilindro) | Rechazado antes de construir (parametrize) |
+| T-104 | Valor NaN o infinito (prisma, agujero, cilindro) | Rechazado antes de construir (parametrize) |
+| T-105 | Valor cero en dimensión (prisma y agujero) | Rechazado antes de construir (parametrize) |
+| T-106 | Campos extra no definidos (prisma y agujero) | Rechazado (extra='forbid', parametrize) |
 | T-107 | Figura desconocida | Rechazado antes de construir |
 | T-108 | Sistema de representación desconocido | Rechazado antes de construir |
+| T-109 | Pydantic v2 acepta NaN/inf/-inf sin validator | Acepta sin error (parametrize) |
 
 ---
 

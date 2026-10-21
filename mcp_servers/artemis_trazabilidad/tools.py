@@ -472,6 +472,7 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
     todos_los_tests: list[dict] = []
     tests_sin_requisito: list[dict] = []
     tests_sin_prueba: list[dict] = []
+    pruebas_rotas: list[dict] = []
     if tests_dir.exists():
         for py in _iter_py_files(tests_dir, root=root):
             for t in _parse_tests(py):
@@ -485,8 +486,8 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
                         }
                     )
                 else:
-                    # Tiene ID pero ¿tiene línea Prueba:?
-                    if not _PRUEBA_RE.search(t["docstring"]):
+                    m_prueba = _PRUEBA_RE.search(t["docstring"])
+                    if not m_prueba:
                         tests_sin_prueba.append(
                             {
                                 "funcion": t["funcion"],
@@ -495,6 +496,29 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
                                 "linea": t["linea"],
                             }
                         )
+                    else:
+                        rel_path = m_prueba.group(1).strip()
+                        name = m_prueba.group(2).strip()
+                        candidate = (root / rel_path).resolve()
+                        error: str | None = None
+                        try:
+                            candidate.relative_to(root.resolve())
+                        except ValueError:
+                            error = f"ruta fuera del repositorio: {rel_path}"
+                        if error is None and not candidate.exists():
+                            error = f"archivo no encontrado: {rel_path}"
+                        if error is None and _extract_node_source(candidate, name) is None:
+                            error = f"nombre '{name}' no encontrado en {rel_path}"
+                        if error:
+                            pruebas_rotas.append(
+                                {
+                                    "funcion": t["funcion"],
+                                    "test_id": t["test_id"],
+                                    "archivo": _rel(py, root),
+                                    "prueba": f"{rel_path}::{name}",
+                                    "error": error,
+                                }
+                            )
 
     # IDs duplicados: T-IDs que aparecen más de una vez
     from collections import Counter
@@ -565,6 +589,7 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
     return {
         "tests_sin_requisito": tests_sin_requisito,
         "tests_sin_prueba": tests_sin_prueba,
+        "pruebas_rotas": pruebas_rotas,
         "ids_duplicados": ids_duplicados,
         "requisitos_sin_test": requisitos_sin_test,
         "tareas_sin_evidencia": tareas_sin_evidencia,
@@ -573,6 +598,7 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
             "total_tests": len(todos_los_tests),
             "sin_requisito": len(tests_sin_requisito),
             "sin_prueba": len(tests_sin_prueba),
+            "pruebas_rotas": len(pruebas_rotas),
             "ids_duplicados": len(ids_duplicados),
             "total_requisitos": len(todos_los_requisitos),
             "sin_test": len(requisitos_sin_test),

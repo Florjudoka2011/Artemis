@@ -101,6 +101,7 @@ spec principal `001/FR-XX`. Esto evita falsos positivos en `huecos_trazabilidad(
 | `mcp/FR-006` | `ultima_evidencia` devuelve el archivo de evidencia más reciente |
 | `mcp/FR-007` | `huecos_trazabilidad` detecta brechas de cobertura y IDs duplicados |
 | `mcp/FR-008` | El MCP excluye `tests/fixtures/` del recorrido para evitar contaminación |
+| `mcp/FR-009` | `huecos_trazabilidad` detecta líneas `Prueba:` que apuntan a archivo o nombre inexistente |
 
 ### Exclusión de fixtures
 

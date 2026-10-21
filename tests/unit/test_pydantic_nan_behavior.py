@@ -19,36 +19,20 @@ class ModeloSinRestriccion(BaseModel):
 
 
 @pytest.mark.mvp
-def test_pydantic_v2_acepta_nan_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta NaN en float sin validator explícito.
+@pytest.mark.parametrize(
+    "valor,check",
+    [
+        (math.nan, math.isnan),
+        (math.inf, math.isinf),
+        (-math.inf, lambda v: math.isinf(v) and v < 0),
+    ],
+)
+def test_pydantic_v2_acepta_valor_especial_sin_validator(valor, check):
+    """T-109 | 001/FR-005 — Pydantic v2 acepta NaN/inf/-inf en float sin validator explícito.
 
     Prueba: src/schemas/figuras.py::PrismaRectangularParams
     """
-    m = ModeloSinRestriccion(valor=math.nan)
-    assert math.isnan(
+    m = ModeloSinRestriccion(valor=valor)
+    assert check(
         m.valor
-    ), "Pydantic v2 NO rechaza NaN por defecto — se requiere math.isfinite() explícito"
-
-
-@pytest.mark.mvp
-def test_pydantic_v2_acepta_inf_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta infinito en float sin validator explícito.
-
-    Prueba: src/schemas/figuras.py::PrismaRectangularParams
-    """
-    m = ModeloSinRestriccion(valor=math.inf)
-    assert math.isinf(
-        m.valor
-    ), "Pydantic v2 NO rechaza inf por defecto — se requiere math.isfinite() explícito"
-
-
-@pytest.mark.mvp
-def test_pydantic_v2_acepta_neg_inf_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta -inf en float sin validator explícito.
-
-    Prueba: src/schemas/figuras.py::PrismaRectangularParams
-    """
-    m = ModeloSinRestriccion(valor=-math.inf)
-    assert (
-        math.isinf(m.valor) and m.valor < 0
-    ), "Pydantic v2 NO rechaza -inf por defecto — se requiere math.isfinite() explícito"
+    ), "Pydantic v2 NO rechaza estos valores por defecto — se requiere math.isfinite() explícito"
