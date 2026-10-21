@@ -624,6 +624,41 @@ def test_requisito_bare_id_multiples_specs_pide_prefijo(tools):
     ), f"El error debe pedir que se especifique el prefijo. Error: {resultado.get('error')!r}"
 
 
+# ── exclusión de tests/fixtures/ ──────────────────────────────────────────────
+
+
+@pytest.mark.mvp
+def test_buscar_test_no_devuelve_ruta_en_fixtures():
+    """T-221 | mcp/FR-008 — buscar_test en repo real nunca retorna archivo en tests/fixtures/.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::buscar_test
+    """
+    from artemis_trazabilidad.tools import buscar_test
+
+    # T-100 existe en tests/fixtures/repo_ejemplo/ — no debe aparecer en repo real
+    resultado = buscar_test("T-100")
+    if resultado["encontrado"]:
+        assert (
+            "tests/fixtures" not in resultado["archivo"]
+        ), f"buscar_test devolvió un archivo en tests/fixtures/: {resultado['archivo']!r}"
+
+
+@pytest.mark.mvp
+def test_huecos_no_incluye_tests_de_fixtures():
+    """T-222 | mcp/FR-008 — huecos_trazabilidad en repo real no incluye tests en tests/fixtures/.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    from artemis_trazabilidad.tools import huecos_trazabilidad
+
+    resultado = huecos_trazabilidad()
+    todos = resultado.get("tests_sin_requisito", []) + resultado.get("tests_sin_prueba", [])
+    for t in todos:
+        assert (
+            "tests/fixtures" not in t["archivo"]
+        ), f"huecos_trazabilidad incluyó un test en tests/fixtures/: {t['archivo']!r}"
+
+
 @pytest.mark.mvp
 def test_funcion_bajo_test_rechaza_ruta_fuera_del_repo(tools):
     """T-218 | 001/FR-MCP — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
