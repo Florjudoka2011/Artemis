@@ -133,7 +133,7 @@ def test_formulario_tiene_checkbox_vistas_iram():
 
 @pytest.mark.mvp
 def test_generar_acepta_vistas_iram():
-    """T-156 | 001/FR-003 — generar() acepta el parámetro vistas_iram sin error.
+    """T-158 | 001/FR-003 — generar() acepta el parámetro vistas_iram sin error.
 
     Prueba: src/ui/app.py::generar
     """

@@ -28,8 +28,8 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-154 | 001/FR-011 | tests/e2e/test_formulario.py | `test_generar_prisma_valido_produce_archivos` |
 | T-155 | 001/FR-004 | tests/e2e/test_formulario.py | `test_generar_cilindro_valido_produce_archivos` |
 | T-156 | 001/FR-003 | tests/e2e/test_formulario.py | `test_formulario_tiene_checkbox_vistas_iram` |
-| T-156 | 001/FR-003 | tests/e2e/test_formulario.py | `test_generar_acepta_vistas_iram` |
 | T-157 | 001/FR-012 | tests/e2e/test_formulario.py | `test_interfaz_tiene_indicador_generando` |
+| T-158 | 001/FR-003 | tests/e2e/test_formulario.py | `test_generar_acepta_vistas_iram` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |

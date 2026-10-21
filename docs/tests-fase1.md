@@ -200,6 +200,12 @@
 | T-150 | JSON del conector falso y JSON ingresado manualmente con los mismos parámetros producen el mismo STL | Archivos STL idénticos (mismo hash) |
 | T-151 | Formulario con campo vacío obligatorio | No genera; lista los campos faltantes |
 | T-152 | Formulario con IA deshabilitada (conector nulo) | Funciona igual; formulario arranca vacío |
+| T-153 | crear_workspace() genera subdirectorio con nombre de figura y timestamp | Directorio existe, is_dir()==True, nombre contiene la figura. **Nota TDD**: escrito DESPUÉS de la implementación (commit eb67542 fix cobertura). |
+| T-154 | generar() con prisma válido retorna rutas STL y STEP en el mensaje | Resultado contiene 'Generado', '.stl' o '.step'. Cita FR-011 (informar resultado). **Nota TDD**: escrito DESPUÉS de la implementación. |
+| T-155 | generar() con cilindro válido retorna mensaje de éxito | Resultado contiene 'Generado'. **Nota TDD**: escrito DESPUÉS de la implementación. |
+| T-156 | crear_interfaz() tiene checkbox "Vistas IRAM" | Label 'Vistas IRAM' presente en demo.blocks. Escrito ANTES de implementación (TDD correcto). |
+| T-158 | generar() acepta el parámetro vistas_iram sin error | No TypeError al pasar vistas_iram=False. Escrito ANTES de implementación (TDD correcto). |
+| T-157 | La interfaz tiene botón con variant='primary' (bloqueo Gradio automático durante generación) | Al menos un Button con variant='primary'. btn.click() con fn=generar actualiza UI al terminar. Escrito ANTES de implementar (T-157 pasó de inmediato: la implementación ya usaba variant='primary'). |
 
 ---
 
@@ -238,7 +244,7 @@ Los siguientes tests deben pasar para considerar el MVP completo:
 
 **Representaciones IRAM**: T-120, T-121, T-122, T-123, T-124
 
-**Formulario**: T-150, T-151, T-152
+**Formulario**: T-150, T-151, T-152, T-153, T-154, T-155, T-156, T-157, T-158
 
 ---
 
