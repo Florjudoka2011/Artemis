@@ -1,0 +1,47 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-9.1.1, pluggy-1.7.0 -- D:\Proyecto\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Proyecto
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1, platformdirs-4.13.5, cov-7.1.0
+collecting ... collected 36 items / 1 deselected / 35 selected
+
+tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py::test_prisma_valido PASSED [  2%]
+tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py::test_campo_faltante PASSED [  5%]
+tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py::test_valor_nan PASSED [  8%]
+tests/unit/test_mcp_trazabilidad.py::test_buscar_test_retorna_archivo_y_linea PASSED [ 11%]
+tests/unit/test_mcp_trazabilidad.py::test_buscar_test_id_inexistente PASSED [ 14%]
+tests/unit/test_mcp_trazabilidad.py::test_buscar_test_sin_id_en_docstring PASSED [ 17%]
+tests/unit/test_mcp_trazabilidad.py::test_funcion_bajo_test_retorna_codigo PASSED [ 20%]
+tests/unit/test_mcp_trazabilidad.py::test_funcion_bajo_test_id_inexistente PASSED [ 22%]
+tests/unit/test_mcp_trazabilidad.py::test_requisito_retorna_texto_y_tests PASSED [ 25%]
+tests/unit/test_mcp_trazabilidad.py::test_requisito_inexistente PASSED   [ 28%]
+tests/unit/test_mcp_trazabilidad.py::test_estado_tareas_agrupa_correctamente PASSED [ 31%]
+tests/unit/test_mcp_trazabilidad.py::test_ultima_evidencia_retorna_contenido PASSED [ 34%]
+tests/unit/test_mcp_trazabilidad.py::test_ultima_evidencia_sin_archivos PASSED [ 37%]
+tests/unit/test_mcp_trazabilidad.py::test_huecos_trazabilidad_detecta_test_sin_id PASSED [ 40%]
+tests/unit/test_mcp_trazabilidad.py::test_huecos_trazabilidad_detecta_req_sin_test PASSED [ 42%]
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_nan_sin_validator PASSED [ 45%]
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_inf_sin_validator PASSED [ 48%]
+tests/unit/test_pydantic_nan_behavior.py::test_pydantic_v2_acepta_neg_inf_sin_validator PASSED [ 51%]
+tests/unit/test_schemas.py::test_prisma_valido_completo PASSED           [ 54%]
+tests/unit/test_schemas.py::test_cilindro_valido_completo PASSED         [ 57%]
+tests/unit/test_schemas.py::test_campo_faltante_prisma PASSED            [ 60%]
+tests/unit/test_schemas.py::test_campo_faltante_cilindro PASSED          [ 62%]
+tests/unit/test_schemas.py::test_tipo_incorrecto_largo PASSED            [ 65%]
+tests/unit/test_schemas.py::test_valor_negativo_largo PASSED             [ 68%]
+tests/unit/test_schemas.py::test_valor_negativo_diametro PASSED          [ 71%]
+tests/unit/test_schemas.py::test_valor_nan PASSED                        [ 74%]
+tests/unit/test_schemas.py::test_valor_infinito PASSED                   [ 77%]
+tests/unit/test_schemas.py::test_valor_nan_agujero_diametro PASSED       [ 80%]
+tests/unit/test_schemas.py::test_valor_nan_cilindro PASSED               [ 82%]
+tests/unit/test_schemas.py::test_valor_cero_alto PASSED                  [ 85%]
+tests/unit/test_schemas.py::test_valor_cero_diametro_agujero PASSED      [ 88%]
+tests/unit/test_schemas.py::test_campo_extra_prisma PASSED               [ 91%]
+tests/unit/test_schemas.py::test_campo_extra_agujero PASSED              [ 94%]
+tests/unit/test_schemas.py::test_figura_tipo_desconocida PASSED          [ 97%]
+tests/unit/test_schemas.py::test_cara_agujero_desconocida PASSED         [100%]
+
+- generated xml file: D:\Proyecto\docs\evidencia\fase1\2026-10-20_2113_junit.xml -
+====================== 35 passed, 1 deselected in 0.44s =======================

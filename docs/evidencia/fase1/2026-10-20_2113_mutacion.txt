@@ -1,0 +1,16 @@
+
+=== Resultados de validacion mutante ===
+
+  MURIO  [OK]  M1: v <= 0  ->  v < 0  en PrismaRectangularParams/CilindroParams (permitiria cero)
+           1 failed, 11 passed in 0.27s
+
+  MURIO  [OK]  M2: math.isfinite(v)  ->  True  en AgujeroParams (siempre finito, T-104 debe matar)
+           1 failed, 9 passed in 0.26s
+
+  MURIO  [OK]  M3: extra='forbid'  ->  extra='ignore'  (T-106 debe matar)
+           1 failed, 14 passed in 0.26s
+
+  MURIO  [OK]  M4: diametro <= 0  ->  diametro < 0  en AgujeroParams (permitiria cero)
+           1 failed, 12 passed in 0.25s
+
+Supervivientes: 0/4
