@@ -56,6 +56,21 @@ Ejemplo correcto: "Según el test `test_pydantic_v2_acepta_nan_sin_validator`
 (tests/unit/test_pydantic_nan_behavior.py), Pydantic v2 acepta NaN sin validator
 explícito. Por eso se usa `math.isfinite()` en los schemas."
 
+### 6. Usar herramientas MCP para responder sobre el estado del proyecto
+
+Para responder sobre tests, requisitos o tareas del proyecto, usar las herramientas
+del servidor MCP `artemis-trazabilidad` y citar `archivo:línea`.
+
+No afirmar el estado del proyecto desde memoria. Siempre verificar con:
+- `buscar_test("T-XXX")` para localizar un test por ID
+- `requisito("FR-XXX")` para ver qué tests cubren un requisito
+- `estado_tareas()` para ver tareas completadas y pendientes
+- `huecos_trazabilidad()` para identificar brechas de cobertura
+- `ultima_evidencia()` para ver la última ejecución verificada
+
+Ejemplo incorrecto: "El test T-100 está en la línea 15 de test_schemas.py."
+Ejemplo correcto: invocar `buscar_test("T-100")` → citar el `archivo:linea` devuelto.
+
 ---
 
 ## Stack y decisiones de entorno

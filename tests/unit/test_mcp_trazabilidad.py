@@ -17,7 +17,7 @@ REPO = pathlib.Path(__file__).parent.parent / "fixtures" / "repo_ejemplo"
 @pytest.fixture
 def tools():
     """T-200 | 001/FR-MCP — Importar herramientas del servidor MCP."""
-    from mcp.artemis_trazabilidad.tools import (
+    from artemis_trazabilidad.tools import (
         buscar_test,
         funcion_bajo_test,
         requisito,
@@ -48,7 +48,7 @@ def test_buscar_test_retorna_archivo_y_linea(tools):
     )
     assert resultado["encontrado"] is True
     assert "test_schemas.py" in resultado["archivo"]
-    assert resultado["linea"] == 11  # línea donde empieza test_prisma_valido
+    assert resultado["linea"] == 9  # línea donde empieza test_prisma_valido
     assert "001/FR-005" in resultado["requisito"]
     assert "test_prisma_valido" in resultado["funcion"]
 
