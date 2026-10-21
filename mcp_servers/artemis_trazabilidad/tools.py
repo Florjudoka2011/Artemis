@@ -140,6 +140,7 @@ def funcion_bajo_test(test_id: str, repo_root: str | None = None) -> dict[str, A
     Usa la línea "Prueba: ruta/archivo.py::NombreClaseOFuncion" del docstring del test.
     Si el test no tiene esa línea, devuelve encontrado=False con error="no determinable".
     Soporta funciones y clases.
+    Rechaza rutas que salen del repositorio (path traversal).
     """
     result = buscar_test(test_id, repo_root)
     if not result["encontrado"]:
@@ -157,7 +158,19 @@ def funcion_bajo_test(test_id: str, repo_root: str | None = None) -> dict[str, A
 
     rel_path = m.group(1).strip()
     target_name = m.group(2).strip()
-    candidate = root / rel_path
+    candidate = (root / rel_path).resolve()
+
+    # Validar que la ruta resuelta quede dentro del repositorio
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        return {
+            "encontrado": False,
+            "error": (
+                f"Ruta fuera del repositorio: {rel_path!r} resuelve a "
+                f"{candidate} (raíz: {root})"
+            ),
+        }
 
     if not candidate.exists():
         return {
@@ -214,22 +227,15 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
     spec_prefix = _spec_prefix_from_req_id(req_id)
     bare = _bare_fr(req_id)
 
-    # Coincidencia exacta: el ID debe aparecer completo, no como prefijo de otro
-    # Ej: FR-005 debe coincidir con "FR-005" pero NO con "FR-0050" ni "FR-005x"
-    exact_re = re.compile(
-        r"(?<!\w)" + re.escape(bare) + r"(?!\w)",
-    )
-
     texto = None
     archivo_req = None
     linea_req = None
 
     for md in sorted(specs_dir.rglob("spec.md")):
-        # Filtrar por spec si se indicó prefijo
+        # Filtrar por spec: la carpeta debe EMPEZAR con "NNN-", no solo CONTENER "NNN"
         if spec_prefix:
             rel = md.relative_to(specs_dir).parts
-            # El directorio de la spec debe contener el prefijo
-            if not any(spec_prefix in part for part in rel):
+            if not any(part == spec_prefix or part.startswith(spec_prefix + "-") for part in rel):
                 continue
 
         lines = md.read_text(encoding="utf-8").splitlines()
@@ -243,8 +249,8 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
                     archivo_req = _rel(md, root)
                     linea_req = i
                     break
-            # Formato legacy: "### FR-XXX: texto"
-            elif exact_re.search(line):
+            # Formato legacy: SOLO títulos "### FR-XXX" (no cualquier línea que contenga el ID)
+            elif re.match(r"###\s+" + re.escape(bare) + r"(?:$|[:\s])", line):
                 block = [line]
                 for j in range(i, min(i + 15, len(lines))):
                     if lines[j].startswith("###") and j != i - 1:
@@ -260,13 +266,13 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
     if not texto:
         return {"encontrado": False, "error": f"No se encontró el requisito {req_id!r} en specs/"}
 
-    # Buscar tests que cubren este requisito (comparar bare FR-XXX)
+    # Buscar tests que cubren este requisito (comparación exacta del ID completo)
     tests_dir = root / "tests"
     tests_cubriendo = []
     if tests_dir.exists():
         for py in _iter_py_files(tests_dir):
             for t in _parse_tests(py):
-                if t["requisito"] and bare in t["requisito"]:
+                if t["requisito"] and t["requisito"] == req_id:
                     tests_cubriendo.append(
                         {
                             "id": t["test_id"],
@@ -408,9 +414,10 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
     """Detecta huecos de trazabilidad en el repositorio.
 
     - tests_sin_requisito: tests que no tienen ID de trazabilidad en su docstring.
+    - tests_sin_prueba: tests con ID pero sin línea 'Prueba: archivo::nombre'.
+    - ids_duplicados: T-IDs que aparecen en más de un test.
     - requisitos_sin_test: requisitos en spec.md que ningún test cubre.
-    - tareas_sin_evidencia: control global (no por tarea). Indica si NO hay
-      ningún archivo de evidencia en docs/evidencia/fase1/.
+    - tareas_sin_evidencia: control global (no por tarea).
     """
     root = _find_repo_root(repo_root)
 
@@ -418,6 +425,7 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
     tests_dir = root / "tests"
     todos_los_tests: list[dict] = []
     tests_sin_requisito: list[dict] = []
+    tests_sin_prueba: list[dict] = []
     if tests_dir.exists():
         for py in _iter_py_files(tests_dir):
             for t in _parse_tests(py):
@@ -430,38 +438,64 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
                             "linea": t["linea"],
                         }
                     )
+                else:
+                    # Tiene ID pero ¿tiene línea Prueba:?
+                    if not _PRUEBA_RE.search(t["docstring"]):
+                        tests_sin_prueba.append(
+                            {
+                                "funcion": t["funcion"],
+                                "test_id": t["test_id"],
+                                "archivo": _rel(py, root),
+                                "linea": t["linea"],
+                            }
+                        )
 
-    # IDs cubiertos: extraer bare FR-XXX de los requisitos de los tests
+    # IDs duplicados: T-IDs que aparecen más de una vez
+    from collections import Counter
+
+    conteo_ids: Counter = Counter(t["test_id"] for t in todos_los_tests if t["test_id"])
+    ids_duplicados = [tid for tid, cnt in conteo_ids.items() if cnt > 1]
+
+    # IDs cubiertos: usar el ID completo con prefijo de spec (001/FR-XXX)
     ids_cubiertos: set[str] = set()
     for t in todos_los_tests:
         if t["requisito"]:
-            ids_cubiertos.add(_bare_fr(t["requisito"]))
+            ids_cubiertos.add(t["requisito"])
 
-    # 2. Recopilar requisitos en specs/ — detecta formato Spec Kit
+    # 2. Recopilar requisitos en specs/ — con ID completo "NNN/FR-XXX"
     specs_dir = root / "specs"
     todos_los_requisitos: list[dict] = []
     if specs_dir.exists():
         for md in sorted(specs_dir.rglob("spec.md")):
+            # Extraer prefijo de spec de la carpeta: "NNN-nombre" → "NNN"
+            spec_folder = (
+                md.relative_to(specs_dir).parts[0] if md.relative_to(specs_dir).parts else ""
+            )
+            spec_num = spec_folder.split("-")[0] if "-" in spec_folder else spec_folder
+
             lines = md.read_text(encoding="utf-8").splitlines()
             for i, line in enumerate(lines, 1):
                 m = _FR_SPECKIT_RE.match(line)
                 if m:
-                    fr_id = "FR-" + m.group(1)
+                    bare_fr = "FR-" + m.group(1)
+                    full_id = f"{spec_num}/{bare_fr}" if spec_num else bare_fr
                     todos_los_requisitos.append(
                         {
-                            "id": fr_id,
+                            "id": full_id,
                             "titulo": m.group(2).strip(),
                             "archivo": _rel(md, root),
                             "linea": i,
                         }
                     )
                 else:
-                    # Formato legacy: ### FR-XXX: título
+                    # Formato legacy: ### FR-XXX: título (solo títulos exactos)
                     m2 = re.match(r"###\s+(FR-[\w-]+)(?::\s+(.*))?", line)
                     if m2:
+                        bare_fr = m2.group(1)
+                        full_id = f"{spec_num}/{bare_fr}" if spec_num else bare_fr
                         todos_los_requisitos.append(
                             {
-                                "id": m2.group(1),
+                                "id": full_id,
                                 "titulo": (m2.group(2) or "").strip(),
                                 "archivo": _rel(md, root),
                                 "linea": i,
@@ -484,12 +518,16 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
 
     return {
         "tests_sin_requisito": tests_sin_requisito,
+        "tests_sin_prueba": tests_sin_prueba,
+        "ids_duplicados": ids_duplicados,
         "requisitos_sin_test": requisitos_sin_test,
         "tareas_sin_evidencia": tareas_sin_evidencia,
         "nota_tareas_sin_evidencia": nota,
         "resumen": {
             "total_tests": len(todos_los_tests),
             "sin_requisito": len(tests_sin_requisito),
+            "sin_prueba": len(tests_sin_prueba),
+            "ids_duplicados": len(ids_duplicados),
             "total_requisitos": len(todos_los_requisitos),
             "sin_test": len(requisitos_sin_test),
         },

@@ -5,6 +5,7 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | Test ID | Feature ID(s) | Archivo | Función |
 |---------|---------------|---------|---------|
 | T-100 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
+| T-100 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-100 | 001/FR-005 | tests/unit/test_schemas.py | `test_prisma_valido_completo` |
 | T-100 | 001/FR-005 | tests/unit/test_schemas.py | `test_cilindro_valido_completo` |
 | T-101 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -27,6 +28,11 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-109 | 001/FR-005 | tests/unit/test_pydantic_nan_behavior.py | `test_pydantic_v2_acepta_nan_sin_validator` |
 | T-109 | 001/FR-005 | tests/unit/test_pydantic_nan_behavior.py | `test_pydantic_v2_acepta_inf_sin_validator` |
 | T-109 | 001/FR-005 | tests/unit/test_pydantic_nan_behavior.py | `test_pydantic_v2_acepta_neg_inf_sin_validator` |
+| T-110 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_cubre_fr001` |
+| T-111 | 001/FR-010 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr010_distinto` |
+| T-112 | 001/FR-011 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr011_distinto` |
+| T-113 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
+| T-120 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 | T-201 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_buscar_test_retorna_archivo_y_linea` |
 | T-201b | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_buscar_test_retorna_ruta_relativa` |
 | T-202 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_buscar_test_id_inexistente` |
@@ -52,7 +58,13 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-212b | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_detecta_formato_spec_kit` |
 | T-212c | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_control_global_explicito` |
 | T-212d | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_rutas_relativas` |
+| T-213 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_requisito_no_mezcla_fr001_con_fr001_de_otra_spec` |
+| T-214 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_spec_filter_usa_starts_with_no_contains` |
+| T-215 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_incluye_ids_duplicados` |
+| T-216 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_trazabilidad_incluye_tests_sin_prueba` |
+| T-217 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_huecos_comparacion_usa_id_completo_no_bare` |
+| T-218 | 001/FR-MCP | tests/unit/test_mcp_trazabilidad.py | `test_funcion_bajo_test_rechaza_ruta_fuera_del_repo` |
 
-**Total tests trazados**: 48
-**Feature IDs cubiertos**: 2
+**Total tests trazados**: 60
+**Feature IDs cubiertos**: 7
 
