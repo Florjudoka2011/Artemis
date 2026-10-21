@@ -103,9 +103,9 @@ def test_funcion_bajo_test_usa_linea_prueba(tools):
         repo_root=str(REPO),
     )
     assert resultado["encontrado"] is True
-    # T-100 tiene: Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    # T-100 tiene: Prueba: src/schemas/figuras.py::PrismaParams
     assert "figuras.py" in resultado["archivo"]
-    assert resultado["funcion_nombre"] == "PrismaRectangularParams"
+    assert resultado["funcion_nombre"] == "PrismaParams"
     assert resultado["linea"] > 0
 
 

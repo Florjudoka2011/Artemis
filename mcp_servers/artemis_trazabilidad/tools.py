@@ -3,6 +3,7 @@ Lógica pura de las herramientas del MCP artemis-trazabilidad.
 
 Solo lectura: no modifica ni importa src/.
 Recibe repo_root como parámetro para facilitar tests con fixtures.
+Todas las rutas devueltas son relativas a repo_root.
 """
 
 from __future__ import annotations
@@ -22,12 +23,29 @@ def _find_repo_root(repo_root: str | None) -> pathlib.Path:
     return pathlib.Path(__file__).parent.parent.parent
 
 
+def _rel(path: pathlib.Path, root: pathlib.Path) -> str:
+    """Devuelve la ruta relativa a root, siempre con separadores /."""
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def _iter_py_files(base: pathlib.Path) -> list[pathlib.Path]:
     return sorted(base.rglob("*.py"))
 
 
 # Patrón: "T-XXX | 001/FR-XXX" en primera línea del docstring
 _TRACE_RE = re.compile(r"(T-[\w-]+)\s*\|\s*([\w/]*/FR-[\w-]+)")
+
+# Patrón línea "Prueba: ruta/archivo.py::NombreClaseOFuncion"
+_PRUEBA_RE = re.compile(r"^\s*Prueba:\s*(.+?)::(\w+)\s*$", re.MULTILINE)
+
+# Patrón para requisitos en formato Spec Kit: "- **FR-XXX**: texto"
+_FR_SPECKIT_RE = re.compile(r"^-\s+\*\*FR-([\w-]+)\*\*:\s+(.*)")
+
+# Patrón para nombre de archivo de evidencia con fecha: AAAA-MM-DD_HHMM_tipo.txt
+_FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{4}_.*\.txt$")
 
 
 def _parse_tests(path: pathlib.Path) -> list[dict[str, Any]]:
@@ -78,7 +96,7 @@ def buscar_test(test_id: str, repo_root: str | None = None) -> dict[str, Any]:
             if t["test_id"] == test_id:
                 return {
                     "encontrado": True,
-                    "archivo": str(py),
+                    "archivo": _rel(py, root),
                     "linea": t["linea"],
                     "funcion": t["funcion"],
                     "requisito": t["requisito"],
@@ -91,8 +109,8 @@ def buscar_test(test_id: str, repo_root: str | None = None) -> dict[str, Any]:
 # ─── herramienta 2: funcion_bajo_test ────────────────────────────────────────
 
 
-def _extract_function_source(path: pathlib.Path, func_name: str) -> dict[str, Any] | None:
-    """Extrae el código fuente de una función de un archivo .py."""
+def _extract_node_source(path: pathlib.Path, name: str) -> dict[str, Any] | None:
+    """Extrae el código fuente de una función o clase de un archivo .py."""
     try:
         source = path.read_text(encoding="utf-8")
     except OSError:
@@ -104,104 +122,136 @@ def _extract_function_source(path: pathlib.Path, func_name: str) -> dict[str, An
 
     lines = source.splitlines()
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == func_name:
-            end = node.end_lineno or node.lineno
-            snippet = "\n".join(lines[node.lineno - 1 : end])
-            return {
-                "funcion_nombre": func_name,
-                "linea": node.lineno,
-                "codigo": snippet,
-            }
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if node.name == name:
+                end = node.end_lineno or node.lineno
+                snippet = "\n".join(lines[node.lineno - 1 : end])
+                return {
+                    "funcion_nombre": name,
+                    "linea": node.lineno,
+                    "codigo": snippet,
+                }
     return None
 
 
 def funcion_bajo_test(test_id: str, repo_root: str | None = None) -> dict[str, Any]:
-    """Devuelve el código real de la función probada por el test dado."""
+    """Devuelve el código de la función/clase bajo test.
+
+    Usa la línea "Prueba: ruta/archivo.py::NombreClaseOFuncion" del docstring del test.
+    Si el test no tiene esa línea, devuelve encontrado=False con error="no determinable".
+    Soporta funciones y clases.
+    """
     result = buscar_test(test_id, repo_root)
     if not result["encontrado"]:
         return result
 
     root = _find_repo_root(repo_root)
-    test_file = pathlib.Path(result["archivo"])
-    try:
-        source = test_file.read_text(encoding="utf-8")
-        tree = ast.parse(source)
-    except (OSError, SyntaxError):
-        return {"encontrado": False, "error": "No se pudo leer el archivo de tests"}
+    docstring = result.get("docstring", "")
 
-    # Buscar la función bajo test: importaciones en el archivo de test
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module:
-            module_path = node.module.replace(".", "/")
-            candidate = root / (module_path + ".py")
-            if candidate.exists():
-                for alias in node.names:
-                    found = _extract_function_source(candidate, alias.name)
-                    if found:
-                        return {
-                            "encontrado": True,
-                            "archivo": str(candidate),
-                            **found,
-                        }
+    m = _PRUEBA_RE.search(docstring)
+    if not m:
+        return {
+            "encontrado": False,
+            "error": "no determinable — el test no tiene línea 'Prueba: archivo::nombre'",
+        }
 
-    # Fallback: buscar en src/ por el nombre del test (heurística)
-    src_dir = root / "src"
-    if src_dir.exists():
-        func_hint = result["funcion"].replace("test_", "").split("_")[0]
-        for py in _iter_py_files(src_dir):
-            found = _extract_function_source(py, func_hint)
-            if found:
-                return {"encontrado": True, "archivo": str(py), **found}
-            # También busca validators que contienen el nombre del test
-            try:
-                tree2 = ast.parse(py.read_text(encoding="utf-8"))
-                for n in ast.walk(tree2):
-                    if isinstance(n, ast.FunctionDef):
-                        for child in ast.walk(n):
-                            if isinstance(child, ast.FunctionDef) and (
-                                child.name in result["funcion"]
-                                or any(
-                                    kw in child.name for kw in ["positivos", "finito", "validator"]
-                                )
-                            ):
-                                src = _extract_function_source(py, child.name)
-                                if src:
-                                    return {"encontrado": True, "archivo": str(py), **src}
-            except (OSError, SyntaxError):
-                continue
+    rel_path = m.group(1).strip()
+    target_name = m.group(2).strip()
+    candidate = root / rel_path
 
-    return {"encontrado": False, "error": f"No se encontró la función bajo test para {test_id!r}"}
+    if not candidate.exists():
+        return {
+            "encontrado": False,
+            "error": f"Archivo no encontrado: {rel_path!r} (desde raíz {root})",
+        }
+
+    found = _extract_node_source(candidate, target_name)
+    if not found:
+        return {
+            "encontrado": False,
+            "error": f"No se encontró '{target_name}' en {rel_path!r}",
+        }
+
+    return {
+        "encontrado": True,
+        "archivo": _rel(candidate, root),
+        **found,
+    }
 
 
 # ─── herramienta 3: requisito ─────────────────────────────────────────────────
 
 
+def _spec_prefix_from_req_id(req_id: str) -> str | None:
+    """Extrae el prefijo de la spec de un req_id del estilo '001/FR-005'.
+
+    Devuelve '001' o None si el formato no tiene prefijo.
+    """
+    parts = req_id.split("/")
+    if len(parts) == 2:
+        return parts[0]
+    return None
+
+
+def _bare_fr(req_id: str) -> str:
+    """Extrae el ID bare 'FR-XXX' de '001/FR-XXX' o 'FR-XXX'."""
+    parts = req_id.split("/")
+    return parts[-1]
+
+
 def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
-    """Devuelve el texto del requisito en specs/ y los tests que lo cubren."""
+    """Devuelve el texto del requisito en specs/ y los tests que lo cubren.
+
+    Acepta 'NNN/FR-XXX' (busca solo en la spec NNN) o 'FR-XXX' (busca en todas).
+    Coincidencia exacta: 'FR-005' no coincide con 'FR-0050'.
+    Detecta el formato Spec Kit: '- **FR-XXX**: texto'.
+    """
     root = _find_repo_root(repo_root)
     specs_dir = root / "specs"
     if not specs_dir.exists():
         return {"encontrado": False, "error": f"specs/ no encontrado en {root}"}
 
-    # Buscar el requisito en archivos spec.md
+    spec_prefix = _spec_prefix_from_req_id(req_id)
+    bare = _bare_fr(req_id)
+
+    # Coincidencia exacta: el ID debe aparecer completo, no como prefijo de otro
+    # Ej: FR-005 debe coincidir con "FR-005" pero NO con "FR-0050" ni "FR-005x"
+    exact_re = re.compile(
+        r"(?<!\w)" + re.escape(bare) + r"(?!\w)",
+    )
+
     texto = None
     archivo_req = None
     linea_req = None
-    # También acepta "FR-005: Texto" o "FR-005" directo
-    frid_re = re.compile(re.escape(req_id), re.IGNORECASE)
 
     for md in sorted(specs_dir.rglob("spec.md")):
+        # Filtrar por spec si se indicó prefijo
+        if spec_prefix:
+            rel = md.relative_to(specs_dir).parts
+            # El directorio de la spec debe contener el prefijo
+            if not any(spec_prefix in part for part in rel):
+                continue
+
         lines = md.read_text(encoding="utf-8").splitlines()
         for i, line in enumerate(lines, 1):
-            if frid_re.search(line):
-                # Extrae párrafo completo a partir de aquí
+            # Formato Spec Kit: "- **FR-XXX**: texto"
+            m_sk = _FR_SPECKIT_RE.match(line)
+            if m_sk:
+                fr_id = "FR-" + m_sk.group(1)
+                if fr_id == bare:
+                    texto = line.strip()
+                    archivo_req = _rel(md, root)
+                    linea_req = i
+                    break
+            # Formato legacy: "### FR-XXX: texto"
+            elif exact_re.search(line):
                 block = [line]
                 for j in range(i, min(i + 15, len(lines))):
                     if lines[j].startswith("###") and j != i - 1:
                         break
                     block.append(lines[j])
                 texto = "\n".join(block).strip()
-                archivo_req = str(md)
+                archivo_req = _rel(md, root)
                 linea_req = i
                 break
         if texto:
@@ -210,18 +260,18 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
     if not texto:
         return {"encontrado": False, "error": f"No se encontró el requisito {req_id!r} en specs/"}
 
-    # Buscar tests que cubren este requisito
+    # Buscar tests que cubren este requisito (comparar bare FR-XXX)
     tests_dir = root / "tests"
     tests_cubriendo = []
     if tests_dir.exists():
         for py in _iter_py_files(tests_dir):
             for t in _parse_tests(py):
-                if t["requisito"] and req_id in t["requisito"]:
+                if t["requisito"] and bare in t["requisito"]:
                     tests_cubriendo.append(
                         {
                             "id": t["test_id"],
                             "funcion": t["funcion"],
-                            "archivo": str(py),
+                            "archivo": _rel(py, root),
                             "linea": t["linea"],
                         }
                     )
@@ -238,74 +288,90 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
 
 # ─── herramienta 4: estado_tareas ────────────────────────────────────────────
 
+_CRITERIO = (
+    "[X] = hecha; [ ] = pendiente. "
+    "No hay estado 'bloqueada' automático: el título de sección no afecta "
+    "la clasificación de las tareas. Solo [X] y [ ] son estados válidos."
+)
+
 
 def _parse_tasks(tasks_path: pathlib.Path) -> dict[str, list[dict[str, Any]]]:
-    """Parsea tasks.md y clasifica en hechas, pendientes y bloqueadas."""
+    """Parsea tasks.md y clasifica en hechas y pendientes.
+
+    Criterio: [X] = hecha; [ ] = pendiente.
+    El título de sección (BLOQUEANTE, etc.) NO cambia el estado de las tareas.
+    """
     try:
         lines = tasks_path.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return {"hechas": [], "pendientes": [], "bloqueadas": []}
+        return {"hechas": [], "pendientes": []}
 
-    done_re = re.compile(r"^\s*-\s*\[X\]\s*(T\w+)\s+(.*)", re.IGNORECASE)
-    todo_re = re.compile(r"^\s*-\s*\[\s\]\s*(T\w+)\s+(.*)")
-    blocked_section = False
+    done_re = re.compile(r"^\s*-\s*\[X\]\s*(T[\w]+)\s+(.*)", re.IGNORECASE)
+    todo_re = re.compile(r"^\s*-\s*\[\s\]\s*(T[\w]+)\s+(.*)")
 
     hechas: list[dict[str, Any]] = []
     pendientes: list[dict[str, Any]] = []
-    bloqueadas: list[dict[str, Any]] = []
 
     for line in lines:
-        if "BLOQUEANTE" in line.upper() or "BLOQUEA" in line.upper():
-            blocked_section = True
         m = done_re.match(line)
         if m:
             hechas.append({"id": m.group(1), "descripcion": m.group(2).strip()})
             continue
         m = todo_re.match(line)
         if m:
-            entry = {"id": m.group(1), "descripcion": m.group(2).strip()}
-            if blocked_section:
-                bloqueadas.append(entry)
-            else:
-                pendientes.append(entry)
+            pendientes.append({"id": m.group(1), "descripcion": m.group(2).strip()})
 
-    return {"hechas": hechas, "pendientes": pendientes, "bloqueadas": bloqueadas}
+    return {"hechas": hechas, "pendientes": pendientes}
 
 
 def estado_tareas(repo_root: str | None = None) -> dict[str, Any]:
-    """Devuelve tareas de tasks.md agrupadas en hechas, pendientes y bloqueadas."""
+    """Devuelve tareas de tasks.md agrupadas en hechas y pendientes.
+
+    Criterio de clasificación: [X] = hecha; [ ] = pendiente.
+    El título de sección (ej. 'BLOQUEANTE') NO afecta la clasificación.
+    """
     root = _find_repo_root(repo_root)
     specs_dir = root / "specs"
     if not specs_dir.exists():
-        return {"hechas": [], "pendientes": [], "bloqueadas": [], "error": "specs/ no encontrado"}
+        return {
+            "hechas": [],
+            "pendientes": [],
+            "criterio": _CRITERIO,
+            "error": "specs/ no encontrado",
+        }
 
     tasks_files = sorted(specs_dir.rglob("tasks.md"))
     if not tasks_files:
         return {
             "hechas": [],
             "pendientes": [],
-            "bloqueadas": [],
+            "criterio": _CRITERIO,
             "error": "No se encontró tasks.md",
         }
 
-    # Combina si hay varios specs (proyecto multi-spec)
     hechas: list[dict] = []
     pendientes: list[dict] = []
-    bloqueadas: list[dict] = []
     for tf in tasks_files:
         parsed = _parse_tasks(tf)
         hechas.extend(parsed["hechas"])
         pendientes.extend(parsed["pendientes"])
-        bloqueadas.extend(parsed["bloqueadas"])
 
-    return {"hechas": hechas, "pendientes": pendientes, "bloqueadas": bloqueadas}
+    return {
+        "hechas": hechas,
+        "pendientes": pendientes,
+        "criterio": _CRITERIO,
+    }
 
 
 # ─── herramienta 5: ultima_evidencia ─────────────────────────────────────────
 
 
 def ultima_evidencia(repo_root: str | None = None) -> dict[str, Any]:
-    """Devuelve la salida de la ejecución más reciente en docs/evidencia/."""
+    """Devuelve el contenido del archivo de evidencia más reciente.
+
+    Solo considera archivos cuyo nombre tenga fecha: AAAA-MM-DD_HHMM_tipo.txt.
+    Los ordena lexicográficamente (el formato garantiza orden cronológico).
+    """
     root = _find_repo_root(repo_root)
     evidencia_dir = root / "docs" / "evidencia" / "fase1"
     if not evidencia_dir.exists():
@@ -314,14 +380,14 @@ def ultima_evidencia(repo_root: str | None = None) -> dict[str, Any]:
             "error": f"docs/evidencia/fase1/ no encontrado en {root}",
         }
 
-    txt_files = sorted(evidencia_dir.glob("*.txt"))
+    # Solo archivos con fecha en el nombre
+    txt_files = sorted(f for f in evidencia_dir.glob("*.txt") if _FECHA_RE.match(f.name))
     if not txt_files:
         return {
             "encontrado": False,
-            "error": "No hay archivos de evidencia en docs/evidencia/fase1/",
+            "error": "No hay archivos de evidencia con fecha en docs/evidencia/fase1/",
         }
 
-    # El más reciente por nombre (formato AAAA-MM-DD_HHMM_tipo.txt)
     ultimo = txt_files[-1]
     try:
         contenido = ultimo.read_text(encoding="utf-8")
@@ -330,7 +396,7 @@ def ultima_evidencia(repo_root: str | None = None) -> dict[str, Any]:
 
     return {
         "encontrado": True,
-        "archivo": str(ultimo),
+        "archivo": _rel(ultimo, root),
         "contenido": contenido,
     }
 
@@ -339,7 +405,13 @@ def ultima_evidencia(repo_root: str | None = None) -> dict[str, Any]:
 
 
 def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
-    """Detecta requisitos sin test, tests sin requisito y tareas hechas sin evidencia."""
+    """Detecta huecos de trazabilidad en el repositorio.
+
+    - tests_sin_requisito: tests que no tienen ID de trazabilidad en su docstring.
+    - requisitos_sin_test: requisitos en spec.md que ningún test cubre.
+    - tareas_sin_evidencia: control global (no por tarea). Indica si NO hay
+      ningún archivo de evidencia en docs/evidencia/fase1/.
+    """
     root = _find_repo_root(repo_root)
 
     # 1. Recopilar todos los tests
@@ -354,44 +426,67 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
                     tests_sin_requisito.append(
                         {
                             "funcion": t["funcion"],
-                            "archivo": str(py),
+                            "archivo": _rel(py, root),
                             "linea": t["linea"],
                         }
                     )
 
-    ids_cubiertos = {t["requisito"] for t in todos_los_tests if t["requisito"]}
+    # IDs cubiertos: extraer bare FR-XXX de los requisitos de los tests
+    ids_cubiertos: set[str] = set()
+    for t in todos_los_tests:
+        if t["requisito"]:
+            ids_cubiertos.add(_bare_fr(t["requisito"]))
 
-    # 2. Recopilar requisitos en specs/
+    # 2. Recopilar requisitos en specs/ — detecta formato Spec Kit
     specs_dir = root / "specs"
     todos_los_requisitos: list[dict] = []
-    req_re = re.compile(r"###\s+(FR-[\w-]+)(?::\s+(.*))?")
     if specs_dir.exists():
         for md in sorted(specs_dir.rglob("spec.md")):
             lines = md.read_text(encoding="utf-8").splitlines()
             for i, line in enumerate(lines, 1):
-                m = req_re.match(line)
+                m = _FR_SPECKIT_RE.match(line)
                 if m:
+                    fr_id = "FR-" + m.group(1)
                     todos_los_requisitos.append(
                         {
-                            "id": m.group(1),
-                            "titulo": (m.group(2) or "").strip(),
-                            "archivo": str(md),
+                            "id": fr_id,
+                            "titulo": m.group(2).strip(),
+                            "archivo": _rel(md, root),
                             "linea": i,
                         }
                     )
+                else:
+                    # Formato legacy: ### FR-XXX: título
+                    m2 = re.match(r"###\s+(FR-[\w-]+)(?::\s+(.*))?", line)
+                    if m2:
+                        todos_los_requisitos.append(
+                            {
+                                "id": m2.group(1),
+                                "titulo": (m2.group(2) or "").strip(),
+                                "archivo": _rel(md, root),
+                                "linea": i,
+                            }
+                        )
 
     requisitos_sin_test = [r for r in todos_los_requisitos if r["id"] not in ids_cubiertos]
 
-    # 3. Tareas marcadas [X] sin evidencia de ejecución de tests
-    tareas = estado_tareas(repo_root)
+    # 3. Control global: ¿hay evidencia de ejecución?
     evidencia_dir = root / "docs" / "evidencia" / "fase1"
-    hay_evidencia = evidencia_dir.exists() and bool(list(evidencia_dir.glob("*.txt")))
-    tareas_sin_evidencia = tareas["hechas"] if not hay_evidencia else []
+    archivos_con_fecha = list(evidencia_dir.glob("*.txt")) if evidencia_dir.exists() else []
+    archivos_con_fecha = [f for f in archivos_con_fecha if _FECHA_RE.match(f.name)]
+    hay_evidencia = bool(archivos_con_fecha)
+
+    nota = (
+        "Control global: indica si NO hay ningún archivo de evidencia con fecha "
+        "en docs/evidencia/fase1/. No es un control por tarea individual."
+    )
+    tareas_sin_evidencia: list[dict] = [] if hay_evidencia else estado_tareas(repo_root)["hechas"]
 
     return {
         "tests_sin_requisito": tests_sin_requisito,
         "requisitos_sin_test": requisitos_sin_test,
         "tareas_sin_evidencia": tareas_sin_evidencia,
+        "nota_tareas_sin_evidencia": nota,
         "resumen": {
             "total_tests": len(todos_los_tests),
             "sin_requisito": len(tests_sin_requisito),
