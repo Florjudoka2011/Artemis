@@ -386,3 +386,207 @@ def test_huecos_trazabilidad_rutas_relativas(tools):
         ).is_absolute(), f"Ruta debe ser relativa: {t['archivo']!r}"
     for r in resultado.get("requisitos_sin_test", []):
         assert not pathlib.Path(r["archivo"]).is_absolute()
+
+
+# ── segunda revisión: 6 correcciones ──────────────────────────────────────────
+
+
+@pytest.mark.mvp
+def test_requisito_no_mezcla_fr001_con_fr001_de_otra_spec(tools):
+    """T-213 | 001/FR-MCP — requisito('001/FR-001') NO incluye tests que cubren '002/FR-001'.
+
+    Bug: bare "FR-001" in "002/FR-001" == True → un test de otra spec aparece como cubriendo
+    el requisito. La comparación debe usar el ID completo '001/FR-001'.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Spec 001 con FR-001
+        spec001 = os.path.join(tmp, "specs", "001-mvp")
+        os.makedirs(spec001)
+        with open(os.path.join(spec001, "spec.md"), "w", encoding="utf-8") as f:
+            f.write("- **FR-001**: Requisito de spec 001.\n")
+
+        # Tests: uno cubre 001/FR-001 (correcto), otro cubre 002/FR-001 (diferente spec)
+        tests_dir = os.path.join(tmp, "tests", "unit")
+        os.makedirs(tests_dir)
+        with open(os.path.join(tests_dir, "__init__.py"), "w") as f:
+            f.write("")
+        with open(os.path.join(tests_dir, "test_ejemplo.py"), "w", encoding="utf-8") as f:
+            f.write(
+                "def test_cubre_001_fr001():\n"
+                '    """T-100 | 001/FR-001 — Cubre el requisito correcto."""\n'
+                "    assert True\n"
+                "\n"
+                "def test_cubre_002_fr001():\n"
+                '    """T-200 | 002/FR-001 — Cubre FR-001 de spec 002, NO de spec 001."""\n'
+                "    assert True\n"
+            )
+
+        resultado = tools["requisito"](req_id="001/FR-001", repo_root=tmp)
+
+    assert resultado["encontrado"] is True
+    test_ids = [t["id"] for t in resultado["tests"]]
+    # T-200 cubre "002/FR-001" — NO debe aparecer en los tests de "001/FR-001"
+    assert "T-200" not in test_ids, (
+        f"T-200 (002/FR-001) NO debe aparecer en tests de '001/FR-001'. "
+        f"IDs encontrados: {test_ids}"
+    )
+    # T-100 cubre "001/FR-001" — SÍ debe aparecer
+    assert "T-100" in test_ids, (
+        f"T-100 (001/FR-001) DEBE aparecer en tests de '001/FR-001'. "
+        f"IDs encontrados: {test_ids}"
+    )
+
+
+@pytest.mark.mvp
+def test_huecos_spec_filter_usa_starts_with_no_contains(tools):
+    """T-214 | 001/FR-MCP — filtro de spec usa 'empieza con NNN-', no 'contiene NNN'.
+
+    Bug: "001" in "9001-archivo" == True → la carpeta "9001-archivo" es incorrectamente
+    incluida cuando se busca la spec "001". El filtro debe verificar que la carpeta
+    EMPIECE con "001-", no que CONTENGA "001".
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Solo crear la carpeta trampa "9001-archivo" (contiene "001" pero NO empieza con "001-")
+        # NO crear "001-mvp" para que el filtro incorrecto encuentre algo en "9001-archivo"
+        trampa_dir = os.path.join(tmp, "specs", "9001-archivo")
+        os.makedirs(trampa_dir)
+        with open(os.path.join(trampa_dir, "spec.md"), "w", encoding="utf-8") as f:
+            f.write("- **FR-001**: Requisito trampa en carpeta 9001-archivo.\n")
+
+        # Crear directorio tests vacío
+        os.makedirs(os.path.join(tmp, "tests"))
+
+        resultado = tools["requisito"](req_id="001/FR-001", repo_root=tmp)
+
+    # Con el bug: "001" in "9001-archivo" == True → encontrado=True (incorrecto)
+    # Con la corrección: "9001-archivo" no empieza con "001-" → encontrado=False (correcto)
+    assert resultado["encontrado"] is False, (
+        f"'9001-archivo' NO es la spec '001'. "
+        f"El filtro no debe incluir carpetas que contienen '001' como substring. "
+        f"Resultado: {resultado}"
+    )
+
+
+@pytest.mark.mvp
+def test_huecos_trazabilidad_incluye_ids_duplicados(tools):
+    """T-215 | 001/FR-MCP — huecos_trazabilidad detecta tests con el mismo T-XX.
+
+    El fixture tiene dos tests con T-100: test_prisma_valido y test_duplicado_mismo_tid.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
+    assert (
+        "ids_duplicados" in resultado
+    ), "El resultado debe incluir la clave 'ids_duplicados' con los T-IDs repetidos"
+    duplicados = resultado["ids_duplicados"]
+    # T-100 aparece dos veces en el fixture
+    assert (
+        "T-100" in duplicados
+    ), f"T-100 está duplicado en el fixture pero no aparece en ids_duplicados: {duplicados}"
+
+
+@pytest.mark.mvp
+def test_huecos_trazabilidad_incluye_tests_sin_prueba(tools):
+    """T-216 | 001/FR-MCP — huecos_trazabilidad detecta tests sin línea 'Prueba:'.
+
+    El fixture tiene test_sin_linea_prueba (T-120) que tiene ID pero no línea Prueba:.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
+    assert "tests_sin_prueba" in resultado, "El resultado debe incluir la clave 'tests_sin_prueba'"
+    funciones_sin_prueba = [t["funcion"] for t in resultado["tests_sin_prueba"]]
+    assert (
+        "test_sin_linea_prueba" in funciones_sin_prueba
+    ), f"test_sin_linea_prueba debe aparecer en tests_sin_prueba: {funciones_sin_prueba}"
+
+
+@pytest.mark.mvp
+def test_huecos_comparacion_usa_id_completo_no_bare(tools):
+    """T-217 | 001/FR-MCP — huecos_trazabilidad usa ID completo '001/FR-XXX' para comparar.
+
+    Bug: si se compara con bare 'FR-001', un test de '002/FR-001' podría cubrir
+    un requisito de '001/FR-001' incorrectamente.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Spec 001 con FR-001
+        spec001 = os.path.join(tmp, "specs", "001-mvp")
+        os.makedirs(spec001)
+        with open(os.path.join(spec001, "spec.md"), "w", encoding="utf-8") as f:
+            f.write("- **FR-001**: Requisito de spec 001.\n")
+
+        # Test que cubre 002/FR-001 (spec 002, NO spec 001)
+        tests_dir = os.path.join(tmp, "tests", "unit")
+        os.makedirs(tests_dir)
+        with open(os.path.join(tests_dir, "__init__.py"), "w") as f:
+            f.write("")
+        with open(os.path.join(tests_dir, "test_ejemplo.py"), "w", encoding="utf-8") as f:
+            f.write(
+                "def test_cubre_002_fr001():\n"
+                '    """T-200 | 002/FR-001 — Cubre FR-001 de la spec 002, no de la 001."""\n'
+                "    assert True\n"
+            )
+
+        resultado = tools["huecos_trazabilidad"](repo_root=tmp)
+
+    # FR-001 de spec 001 NO debe considerarse cubierta por un test de 002/FR-001
+    req_sin_test = [r["id"] for r in resultado.get("requisitos_sin_test", [])]
+    assert "001/FR-001" in req_sin_test or "FR-001" in req_sin_test, (
+        f"001/FR-001 debe aparecer como sin cobertura (solo cubierto por 002/FR-001): "
+        f"{req_sin_test}"
+    )
+
+
+@pytest.mark.mvp
+def test_funcion_bajo_test_rechaza_ruta_fuera_del_repo(tools):
+    """T-218 | 001/FR-MCP — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
+
+    Una línea 'Prueba: ../../etc/passwd::algo' no debe ser ejecutada como path traversal.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::funcion_bajo_test
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tests_dir = os.path.join(tmp, "tests", "unit")
+        os.makedirs(tests_dir)
+        with open(os.path.join(tests_dir, "__init__.py"), "w") as f:
+            f.write("")
+        # Test con ruta que intenta salir del repo
+        with open(os.path.join(tests_dir, "test_traversal.py"), "w", encoding="utf-8") as f:
+            f.write(
+                "def test_traversal():\n"
+                '    """T-999 | 001/FR-001 — Path traversal test.\n'
+                "\n"
+                "    Prueba: ../../etc/passwd::root\n"
+                '    """\n'
+                "    assert True\n"
+            )
+
+        resultado = tools["funcion_bajo_test"](test_id="T-999", repo_root=tmp)
+
+    assert (
+        resultado["encontrado"] is False
+    ), "funcion_bajo_test debe rechazar rutas que salen del repositorio"
+    assert (
+        "fuera" in resultado.get("error", "").lower()
+        or "traversal" in resultado.get("error", "").lower()
+        or "repositorio" in resultado.get("error", "").lower()
+    ), f"El error debe indicar ruta fuera del repositorio: " f"{resultado.get('error')!r}"
