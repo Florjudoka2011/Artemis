@@ -696,6 +696,51 @@ def test_requisito_bare_id_multiples_specs_pide_prefijo(tools):
 
 
 @pytest.mark.mvp
+def test_huecos_incluye_campo_pruebas_rotas(tools):
+    """T-223 | mcp/FR-007 — huecos_trazabilidad() incluye campo pruebas_rotas.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
+    assert "pruebas_rotas" in resultado
+
+
+@pytest.mark.mvp
+def test_huecos_detecta_prueba_con_nombre_inexistente(tools):
+    """T-224 | mcp/FR-007 — pruebas_rotas detecta Prueba: que apunta a nombre que no existe.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # archivo existe pero la clase no
+        src = os.path.join(tmp, "src", "schemas")
+        os.makedirs(src)
+        with open(os.path.join(src, "figuras.py"), "w", encoding="utf-8") as f:
+            f.write("class PrismaParams:\n    pass\n")
+        tdir = os.path.join(tmp, "tests", "unit")
+        os.makedirs(tdir)
+        with open(os.path.join(tdir, "__init__.py"), "w") as f:
+            f.write("")
+        with open(os.path.join(tdir, "test_roto.py"), "w", encoding="utf-8") as f:
+            f.write(
+                "def test_roto():\n"
+                '    """T-501 | 001/FR-001 — Prueba: rota.\n'
+                "\n"
+                "    Prueba: src/schemas/figuras.py::ClaseQueNoExiste\n"
+                '    """\n'
+                "    assert True\n"
+            )
+        resultado = tools["huecos_trazabilidad"](repo_root=tmp)
+
+    rotas = resultado.get("pruebas_rotas", [])
+    assert len(rotas) == 1, f"Se esperaba 1 rota, se encontraron {len(rotas)}: {rotas}"
+    assert "ClaseQueNoExiste" in rotas[0]["prueba"] or "ClaseQueNoExiste" in rotas[0]["error"]
+
+
+@pytest.mark.mvp
 def test_funcion_bajo_test_rechaza_ruta_fuera_del_repo(tools):
     """T-218 | mcp/FR-003 — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
 
