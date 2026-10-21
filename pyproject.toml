@@ -31,6 +31,7 @@ include = ["src*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-m 'mvp and not perf'"
+norecursedirs = ["tests/fixtures"]
 markers = [
     "mvp: Tests del MVP — requeridos para el primer hito demostrable",
     "perf: Tests de rendimiento — ejecutar manualmente fuera de CI",

@@ -20,7 +20,10 @@ class ModeloSinRestriccion(BaseModel):
 
 @pytest.mark.mvp
 def test_pydantic_v2_acepta_nan_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta NaN en float sin validator explícito."""
+    """T-109 | 001/FR-005 — Pydantic v2 acepta NaN en float sin validator explícito.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     m = ModeloSinRestriccion(valor=math.nan)
     assert math.isnan(
         m.valor
@@ -29,7 +32,10 @@ def test_pydantic_v2_acepta_nan_sin_validator():
 
 @pytest.mark.mvp
 def test_pydantic_v2_acepta_inf_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta infinito en float sin validator explícito."""
+    """T-109 | 001/FR-005 — Pydantic v2 acepta infinito en float sin validator explícito.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     m = ModeloSinRestriccion(valor=math.inf)
     assert math.isinf(
         m.valor
@@ -38,7 +44,10 @@ def test_pydantic_v2_acepta_inf_sin_validator():
 
 @pytest.mark.mvp
 def test_pydantic_v2_acepta_neg_inf_sin_validator():
-    """T-109 | 001/FR-005 — Pydantic v2 acepta -inf en float sin validator explícito."""
+    """T-109 | 001/FR-005 — Pydantic v2 acepta -inf en float sin validator explícito.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     m = ModeloSinRestriccion(valor=-math.inf)
     assert (
         math.isinf(m.valor) and m.valor < 0

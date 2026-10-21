@@ -31,8 +31,33 @@ def _rel(path: pathlib.Path, root: pathlib.Path) -> str:
         return path.as_posix()
 
 
-def _iter_py_files(base: pathlib.Path) -> list[pathlib.Path]:
-    return sorted(base.rglob("*.py"))
+# Directorios excluidos del recorrido de tests (rutas relativas a repo_root)
+_DEFAULT_EXCLUDE_DIRS: frozenset[str] = frozenset(["tests/fixtures"])
+
+
+def _iter_py_files(
+    base: pathlib.Path,
+    root: pathlib.Path | None = None,
+    exclude_dirs: frozenset[str] | None = None,
+) -> list[pathlib.Path]:
+    """Itera archivos .py bajo base, excluyendo directorios configurados.
+
+    exclude_dirs: rutas relativas a root que se omiten.
+    Por defecto excluye tests/fixtures/ para evitar contaminación de fixtures.
+    """
+    if exclude_dirs is None:
+        exclude_dirs = _DEFAULT_EXCLUDE_DIRS
+    result = []
+    for py in sorted(base.rglob("*.py")):
+        if root is not None and exclude_dirs:
+            try:
+                rel = py.relative_to(root).as_posix()
+                if any(rel == excl or rel.startswith(excl + "/") for excl in exclude_dirs):
+                    continue
+            except ValueError:
+                pass
+        result.append(py)
+    return result
 
 
 # Patrón: "T-XXX | 001/FR-XXX" en primera línea del docstring
@@ -91,7 +116,7 @@ def buscar_test(test_id: str, repo_root: str | None = None) -> dict[str, Any]:
     if not tests_dir.exists():
         return {"encontrado": False, "error": f"Directorio tests/ no encontrado en {root}"}
 
-    for py in _iter_py_files(tests_dir):
+    for py in _iter_py_files(tests_dir, root=root):
         for t in _parse_tests(py):
             if t["test_id"] == test_id:
                 return {
@@ -291,7 +316,7 @@ def requisito(req_id: str, repo_root: str | None = None) -> dict[str, Any]:
     tests_dir = root / "tests"
     tests_cubriendo = []
     if tests_dir.exists():
-        for py in _iter_py_files(tests_dir):
+        for py in _iter_py_files(tests_dir, root=root):
             for t in _parse_tests(py):
                 if t["requisito"] and t["requisito"] == req_id:
                     tests_cubriendo.append(
@@ -448,7 +473,7 @@ def huecos_trazabilidad(repo_root: str | None = None) -> dict[str, Any]:
     tests_sin_requisito: list[dict] = []
     tests_sin_prueba: list[dict] = []
     if tests_dir.exists():
-        for py in _iter_py_files(tests_dir):
+        for py in _iter_py_files(tests_dir, root=root):
             for t in _parse_tests(py):
                 todos_los_tests.append(t)
                 if not t["test_id"]:

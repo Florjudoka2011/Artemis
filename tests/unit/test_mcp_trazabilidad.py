@@ -1,5 +1,5 @@
 """
-T-200 | 001/FR-MCP — Tests del servidor MCP artemis-trazabilidad.
+T-200 | mcp/FR-001 — Tests del servidor MCP artemis-trazabilidad.
 
 Verifica que cada herramienta devuelva exactamente el archivo, la línea
 y el texto esperados usando el repo de prueba en tests/fixtures/repo_ejemplo/.
@@ -16,7 +16,7 @@ REPO = pathlib.Path(__file__).parent.parent / "fixtures" / "repo_ejemplo"
 
 @pytest.fixture
 def tools():
-    """T-200 | 001/FR-MCP — Importar herramientas del servidor MCP."""
+    """T-200 | mcp/FR-001 — Importar herramientas del servidor MCP."""
     from artemis_trazabilidad.tools import (
         buscar_test,
         funcion_bajo_test,
@@ -41,23 +41,29 @@ def tools():
 
 @pytest.mark.mvp
 def test_buscar_test_retorna_archivo_y_linea(tools):
-    """T-201 | 001/FR-MCP — buscar_test devuelve archivo y línea exactos."""
+    """T-201 | mcp/FR-002 — buscar_test devuelve archivo y línea exactos.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::buscar_test
+    """
     resultado = tools["buscar_test"](
-        test_id="T-100",
+        test_id="T-900",
         repo_root=str(REPO),
     )
     assert resultado["encontrado"] is True
     assert "test_schemas.py" in resultado["archivo"]
-    assert resultado["linea"] == 9  # línea donde empieza test_prisma_valido
+    assert resultado["linea"] == 11  # línea donde empieza test_prisma_valido
     assert "001/FR-005" in resultado["requisito"]
     assert "test_prisma_valido" in resultado["funcion"]
 
 
 @pytest.mark.mvp
 def test_buscar_test_retorna_ruta_relativa(tools):
-    """T-201b | 001/FR-MCP — buscar_test devuelve ruta relativa a la raíz del repo."""
+    """T-201b | mcp/FR-002 — buscar_test devuelve ruta relativa a la raíz del repo.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::buscar_test
+    """
     resultado = tools["buscar_test"](
-        test_id="T-100",
+        test_id="T-900",
         repo_root=str(REPO),
     )
     assert resultado["encontrado"] is True
@@ -70,7 +76,10 @@ def test_buscar_test_retorna_ruta_relativa(tools):
 
 @pytest.mark.mvp
 def test_buscar_test_id_inexistente(tools):
-    """T-202 | 001/FR-MCP — buscar_test con ID inexistente retorna encontrado=False."""
+    """T-202 | mcp/FR-002 — buscar_test con ID inexistente retorna encontrado=False.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::buscar_test
+    """
     resultado = tools["buscar_test"](
         test_id="T-999",
         repo_root=str(REPO),
@@ -81,7 +90,10 @@ def test_buscar_test_id_inexistente(tools):
 
 @pytest.mark.mvp
 def test_buscar_test_sin_id_en_docstring(tools):
-    """T-203 | 001/FR-MCP — tests sin ID en docstring no aparecen en buscar_test."""
+    """T-203 | mcp/FR-002 — tests sin ID en docstring no aparecen en buscar_test.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::buscar_test
+    """
     resultado = tools["buscar_test"](
         test_id="T-SIN-ID",
         repo_root=str(REPO),
@@ -94,16 +106,16 @@ def test_buscar_test_sin_id_en_docstring(tools):
 
 @pytest.mark.mvp
 def test_funcion_bajo_test_usa_linea_prueba(tools):
-    """T-204 | 001/FR-MCP — funcion_bajo_test usa la línea 'Prueba:' del docstring.
+    """T-204 | mcp/FR-003 — funcion_bajo_test usa la línea 'Prueba:' del docstring.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::funcion_bajo_test
     """
     resultado = tools["funcion_bajo_test"](
-        test_id="T-100",
+        test_id="T-900",
         repo_root=str(REPO),
     )
     assert resultado["encontrado"] is True
-    # T-100 tiene: Prueba: src/schemas/figuras.py::PrismaParams
+    # T-900 tiene: Prueba: src/schemas/figuras.py::PrismaParams
     assert "figuras.py" in resultado["archivo"]
     assert resultado["funcion_nombre"] == "PrismaParams"
     assert resultado["linea"] > 0
@@ -111,15 +123,10 @@ def test_funcion_bajo_test_usa_linea_prueba(tools):
 
 @pytest.mark.mvp
 def test_funcion_bajo_test_sin_linea_prueba_devuelve_no_determinable(tools):
-    """T-204b | 001/FR-MCP — funcion_bajo_test sin 'Prueba:' devuelve no_determinable.
+    """T-204b | mcp/FR-003 — funcion_bajo_test sin 'Prueba:' devuelve no_determinable.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::funcion_bajo_test
     """
-    # test_sin_id no tiene línea Prueba:
-    # buscamos T-101 que sí tiene Prueba: pero el test tiene docstring ambiguo;
-    # usamos directamente test_sin_id: no tiene ID, necesitamos otro test sin Prueba:
-    # T-104 tiene Prueba: src/schemas/figuras.py::CilindroParams
-    # Necesitamos un caso sin línea Prueba: — creamos uno buscando T-999 (inexistente)
     resultado = tools["funcion_bajo_test"](
         test_id="T-999",
         repo_root=str(REPO),
@@ -129,7 +136,10 @@ def test_funcion_bajo_test_sin_linea_prueba_devuelve_no_determinable(tools):
 
 @pytest.mark.mvp
 def test_funcion_bajo_test_id_inexistente(tools):
-    """T-205 | 001/FR-MCP — funcion_bajo_test con ID inexistente retorna encontrado=False."""
+    """T-205 | mcp/FR-003 — funcion_bajo_test con ID inexistente retorna encontrado=False.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::funcion_bajo_test
+    """
     resultado = tools["funcion_bajo_test"](
         test_id="T-999",
         repo_root=str(REPO),
@@ -139,9 +149,12 @@ def test_funcion_bajo_test_id_inexistente(tools):
 
 @pytest.mark.mvp
 def test_funcion_bajo_test_ruta_relativa(tools):
-    """T-205b | 001/FR-MCP — funcion_bajo_test devuelve ruta relativa."""
+    """T-205b | mcp/FR-003 — funcion_bajo_test devuelve ruta relativa.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::funcion_bajo_test
+    """
     resultado = tools["funcion_bajo_test"](
-        test_id="T-100",
+        test_id="T-900",
         repo_root=str(REPO),
     )
     assert resultado["encontrado"] is True
@@ -155,7 +168,7 @@ def test_funcion_bajo_test_ruta_relativa(tools):
 
 @pytest.mark.mvp
 def test_requisito_formato_spec_kit(tools):
-    """T-206 | 001/FR-MCP — requisito detecta formato '- **FR-XXX**: texto' de Spec Kit.
+    """T-206 | mcp/FR-004 — requisito detecta formato '- **FR-XXX**: texto' de Spec Kit.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
     """
@@ -166,12 +179,12 @@ def test_requisito_formato_spec_kit(tools):
     assert resultado["encontrado"] is True, f"Error: {resultado.get('error')}"
     assert "validaci" in resultado["texto"].lower() or "inválidos" in resultado["texto"].lower()
     ids = [t["id"] for t in resultado["tests"]]
-    assert "T-100" in ids
+    assert "T-900" in ids
 
 
 @pytest.mark.mvp
 def test_requisito_coincidencia_exacta_no_prefijo(tools):
-    """T-206b | 001/FR-MCP — requisito('001/FR-00') NO encuentra FR-005 (coincidencia exacta).
+    """T-206b | mcp/FR-004 — requisito('001/FR-00') NO encuentra FR-005 (coincidencia exacta).
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
     """
@@ -185,7 +198,7 @@ def test_requisito_coincidencia_exacta_no_prefijo(tools):
 
 @pytest.mark.mvp
 def test_requisito_busca_solo_en_su_spec(tools):
-    """T-206c | 001/FR-MCP — requisito('001/FR-005') busca solo en spec 001.
+    """T-206c | mcp/FR-004 — requisito('001/FR-005') busca solo en spec 001.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
     """
@@ -200,7 +213,10 @@ def test_requisito_busca_solo_en_su_spec(tools):
 
 @pytest.mark.mvp
 def test_requisito_inexistente(tools):
-    """T-207 | 001/FR-MCP — requisito inexistente retorna encontrado=False."""
+    """T-207 | mcp/FR-004 — requisito inexistente retorna encontrado=False.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
     resultado = tools["requisito"](
         req_id="001/FR-999",
         repo_root=str(REPO),
@@ -210,7 +226,10 @@ def test_requisito_inexistente(tools):
 
 @pytest.mark.mvp
 def test_requisito_ruta_relativa(tools):
-    """T-207b | 001/FR-MCP — requisito devuelve ruta relativa."""
+    """T-207b | mcp/FR-004 — requisito devuelve ruta relativa.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
     resultado = tools["requisito"](
         req_id="001/FR-005",
         repo_root=str(REPO),
@@ -224,7 +243,7 @@ def test_requisito_ruta_relativa(tools):
 
 @pytest.mark.mvp
 def test_estado_tareas_agrupa_correctamente(tools):
-    """T-208 | 001/FR-MCP — estado_tareas agrupa en hechas y pendientes (sin bloqueadas).
+    """T-208 | mcp/FR-005 — estado_tareas agrupa en hechas y pendientes (sin bloqueadas).
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::estado_tareas
     """
@@ -239,7 +258,7 @@ def test_estado_tareas_agrupa_correctamente(tools):
 
 @pytest.mark.mvp
 def test_estado_tareas_sin_estado_bloqueado_fantasma(tools):
-    """T-208b | 001/FR-MCP — estado_tareas no clasifica como 'bloqueada' sin criterio explícito.
+    """T-208b | mcp/FR-005 — estado_tareas no clasifica como 'bloqueada' sin criterio explícito.
 
     El estado 'bloqueada' solo aplica si la tarea está marcada [B] o similar;
     el título de sección no contamina a las tareas siguientes.
@@ -256,7 +275,7 @@ def test_estado_tareas_sin_estado_bloqueado_fantasma(tools):
 
 @pytest.mark.mvp
 def test_estado_tareas_incluye_criterio_en_resultado(tools):
-    """T-208c | 001/FR-MCP — estado_tareas documenta el criterio de clasificación.
+    """T-208c | mcp/FR-005 — estado_tareas documenta el criterio de clasificación.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::estado_tareas
     """
@@ -271,7 +290,10 @@ def test_estado_tareas_incluye_criterio_en_resultado(tools):
 
 @pytest.mark.mvp
 def test_ultima_evidencia_retorna_contenido(tools):
-    """T-209 | 001/FR-MCP — ultima_evidencia devuelve la salida más reciente."""
+    """T-209 | mcp/FR-006 — ultima_evidencia devuelve la salida más reciente.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::ultima_evidencia
+    """
     resultado = tools["ultima_evidencia"](repo_root=str(REPO))
     assert resultado["encontrado"] is True
     assert "2026-10-20" in resultado["archivo"]
@@ -280,7 +302,7 @@ def test_ultima_evidencia_retorna_contenido(tools):
 
 @pytest.mark.mvp
 def test_ultima_evidencia_considera_solo_archivos_con_fecha(tools):
-    """T-209b | 001/FR-MCP — ultima_evidencia solo considera archivos con fecha en el nombre.
+    """T-209b | mcp/FR-006 — ultima_evidencia solo considera archivos con fecha en el nombre.
 
     Los archivos sin fecha en el nombre (ej: 'notas.txt') no deben ser seleccionados.
 
@@ -306,7 +328,10 @@ def test_ultima_evidencia_considera_solo_archivos_con_fecha(tools):
 
 @pytest.mark.mvp
 def test_ultima_evidencia_sin_archivos(tools):
-    """T-210 | 001/FR-MCP — ultima_evidencia sin archivos retorna encontrado=False."""
+    """T-210 | mcp/FR-006 — ultima_evidencia sin archivos retorna encontrado=False.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::ultima_evidencia
+    """
     import tempfile
     import os
 
@@ -318,7 +343,10 @@ def test_ultima_evidencia_sin_archivos(tools):
 
 @pytest.mark.mvp
 def test_ultima_evidencia_ruta_relativa(tools):
-    """T-210b | 001/FR-MCP — ultima_evidencia devuelve ruta relativa."""
+    """T-210b | mcp/FR-006 — ultima_evidencia devuelve ruta relativa.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::ultima_evidencia
+    """
     resultado = tools["ultima_evidencia"](repo_root=str(REPO))
     assert resultado["encontrado"] is True
     assert not pathlib.Path(resultado["archivo"]).is_absolute()
@@ -329,7 +357,10 @@ def test_ultima_evidencia_ruta_relativa(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_detecta_test_sin_id(tools):
-    """T-211 | 001/FR-MCP — huecos_trazabilidad detecta tests sin ID de trazabilidad."""
+    """T-211 | mcp/FR-007 — huecos_trazabilidad detecta tests sin ID de trazabilidad.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
     resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
     sin_id = [t["funcion"] for t in resultado.get("tests_sin_requisito", [])]
     assert "test_sin_id" in sin_id
@@ -337,9 +368,11 @@ def test_huecos_trazabilidad_detecta_test_sin_id(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_detecta_req_sin_test(tools):
-    """T-212 | 001/FR-MCP — huecos_trazabilidad detecta requisitos sin test.
+    """T-212 | mcp/FR-007 — huecos_trazabilidad detecta requisitos sin test.
 
     FR-004 está en el fixture spec.md pero ningún test lo cubre.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
     """
     resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
     req_sin_test = [r["id"] for r in resultado.get("requisitos_sin_test", [])]
@@ -349,7 +382,7 @@ def test_huecos_trazabilidad_detecta_req_sin_test(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_detecta_formato_spec_kit(tools):
-    """T-212b | 001/FR-MCP — huecos_trazabilidad detecta FRs en formato '- **FR-XXX**: texto'.
+    """T-212b | mcp/FR-007 — huecos_trazabilidad detecta FRs en formato '- **FR-XXX**: texto'.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
     """
@@ -365,7 +398,7 @@ def test_huecos_trazabilidad_detecta_formato_spec_kit(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_control_global_explicito(tools):
-    """T-212c | 001/FR-MCP — tareas_sin_evidencia es control global, no por tarea.
+    """T-212c | mcp/FR-007 — tareas_sin_evidencia es control global, no por tarea.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
     """
@@ -378,7 +411,10 @@ def test_huecos_trazabilidad_control_global_explicito(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_rutas_relativas(tools):
-    """T-212d | 001/FR-MCP — huecos_trazabilidad devuelve rutas relativas."""
+    """T-212d | mcp/FR-007 — huecos_trazabilidad devuelve rutas relativas.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
+    """
     resultado = tools["huecos_trazabilidad"](repo_root=str(REPO))
     for t in resultado.get("tests_sin_requisito", []):
         assert not pathlib.Path(
@@ -393,7 +429,7 @@ def test_huecos_trazabilidad_rutas_relativas(tools):
 
 @pytest.mark.mvp
 def test_requisito_no_mezcla_fr001_con_fr001_de_otra_spec(tools):
-    """T-213 | 001/FR-MCP — requisito('001/FR-001') NO incluye tests que cubren '002/FR-001'.
+    """T-213 | mcp/FR-004 — requisito('001/FR-001') NO incluye tests que cubren '002/FR-001'.
 
     Bug: bare "FR-001" in "002/FR-001" == True → un test de otra spec aparece como cubriendo
     el requisito. La comparación debe usar el ID completo '001/FR-001'.
@@ -444,7 +480,7 @@ def test_requisito_no_mezcla_fr001_con_fr001_de_otra_spec(tools):
 
 @pytest.mark.mvp
 def test_huecos_spec_filter_usa_starts_with_no_contains(tools):
-    """T-214 | 001/FR-MCP — filtro de spec usa 'empieza con NNN-', no 'contiene NNN'.
+    """T-214 | mcp/FR-004 — filtro de spec usa 'empieza con NNN-', no 'contiene NNN'.
 
     Bug: "001" in "9001-archivo" == True → la carpeta "9001-archivo" es incorrectamente
     incluida cuando se busca la spec "001". El filtro debe verificar que la carpeta
@@ -479,9 +515,9 @@ def test_huecos_spec_filter_usa_starts_with_no_contains(tools):
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_incluye_ids_duplicados(tools):
-    """T-215 | 001/FR-MCP — huecos_trazabilidad detecta tests con el mismo T-XX.
+    """T-215 | mcp/FR-007 — huecos_trazabilidad detecta tests con el mismo T-XX.
 
-    El fixture tiene dos tests con T-100: test_prisma_valido y test_duplicado_mismo_tid.
+    El fixture tiene dos tests con T-900: test_prisma_valido y test_duplicado_mismo_tid.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
     """
@@ -490,17 +526,17 @@ def test_huecos_trazabilidad_incluye_ids_duplicados(tools):
         "ids_duplicados" in resultado
     ), "El resultado debe incluir la clave 'ids_duplicados' con los T-IDs repetidos"
     duplicados = resultado["ids_duplicados"]
-    # T-100 aparece dos veces en el fixture
+    # T-900 aparece dos veces en el fixture
     assert (
-        "T-100" in duplicados
-    ), f"T-100 está duplicado en el fixture pero no aparece en ids_duplicados: {duplicados}"
+        "T-900" in duplicados
+    ), f"T-900 está duplicado en el fixture pero no aparece en ids_duplicados: {duplicados}"
 
 
 @pytest.mark.mvp
 def test_huecos_trazabilidad_incluye_tests_sin_prueba(tools):
-    """T-216 | 001/FR-MCP — huecos_trazabilidad detecta tests sin línea 'Prueba:'.
+    """T-216 | mcp/FR-007 — huecos_trazabilidad detecta tests sin línea 'Prueba:'.
 
-    El fixture tiene test_sin_linea_prueba (T-120) que tiene ID pero no línea Prueba:.
+    El fixture tiene test_sin_linea_prueba (T-908) que tiene ID pero no línea Prueba:.
 
     Prueba: mcp_servers/artemis_trazabilidad/tools.py::huecos_trazabilidad
     """
@@ -514,7 +550,7 @@ def test_huecos_trazabilidad_incluye_tests_sin_prueba(tools):
 
 @pytest.mark.mvp
 def test_huecos_comparacion_usa_id_completo_no_bare(tools):
-    """T-217 | 001/FR-MCP — huecos_trazabilidad usa ID completo '001/FR-XXX' para comparar.
+    """T-217 | mcp/FR-007 — huecos_trazabilidad usa ID completo '001/FR-XXX' para comparar.
 
     Bug: si se compara con bare 'FR-001', un test de '002/FR-001' podría cubrir
     un requisito de '001/FR-001' incorrectamente.
@@ -553,78 +589,7 @@ def test_huecos_comparacion_usa_id_completo_no_bare(tools):
     )
 
 
-@pytest.mark.mvp
-def test_requisito_bare_id_una_sola_spec_completa_prefijo(tools):
-    """T-219 | 001/FR-MCP — requisito('FR-005') con una sola spec completa el prefijo.
-
-    Si el ID viene sin prefijo (ej. 'FR-005') y existe exactamente una spec,
-    debe buscarse como '001/FR-005' automáticamente.
-
-    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
-    """
-    import tempfile
-    import os
-
-    with tempfile.TemporaryDirectory() as tmp:
-        # Solo una spec
-        spec_dir = os.path.join(tmp, "specs", "001-mvp")
-        os.makedirs(spec_dir)
-        with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
-            f.write("- **FR-005**: Validación de parámetros.\n")
-
-        os.makedirs(os.path.join(tmp, "tests"))
-
-        # ID sin prefijo — debe autocompletar a "001/FR-005"
-        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
-
-    assert resultado["encontrado"] is True, (
-        f"Con una sola spec, 'FR-005' debería encontrarse como '001/FR-005'. "
-        f"Error: {resultado.get('error')}"
-    )
-    assert "FR-005" in resultado["texto"]
-    # El id devuelto debe tener el prefijo completado automáticamente
-    assert resultado["id"] == "001/FR-005", (
-        f"El id devuelto debe ser '001/FR-005' (con prefijo autocomplete), "
-        f"se obtuvo: {resultado.get('id')!r}"
-    )
-
-
-@pytest.mark.mvp
-def test_requisito_bare_id_multiples_specs_pide_prefijo(tools):
-    """T-220 | 001/FR-MCP — requisito('FR-005') con múltiples specs devuelve error.
-
-    Si hay más de una spec y no se especifica prefijo, debe devolver un error
-    que explique que hay que indicar el prefijo (ej. '001/FR-005').
-
-    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
-    """
-    import tempfile
-    import os
-
-    with tempfile.TemporaryDirectory() as tmp:
-        # Dos specs diferentes
-        for folder in ["001-mvp", "002-v2"]:
-            spec_dir = os.path.join(tmp, "specs", folder)
-            os.makedirs(spec_dir)
-            with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
-                f.write(f"- **FR-005**: Requisito en {folder}.\n")
-
-        os.makedirs(os.path.join(tmp, "tests"))
-
-        # ID sin prefijo con múltiples specs — debe pedir que se especifique
-        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
-
-    assert (
-        resultado["encontrado"] is False
-    ), "Con múltiples specs y sin prefijo, debe devolver encontrado=False"
-    # El error debe mencionar que hay que especificar el prefijo
-    error = resultado.get("error", "").lower()
-    assert (
-        "prefijo" in error or "spec" in error or "001/" in error or "002/" in error
-    ), f"El error debe pedir que se especifique el prefijo. Error: {resultado.get('error')!r}"
-
-
-# ── exclusión de tests/fixtures/ ──────────────────────────────────────────────
+# ── tercera revisión: exclusión fixtures + IDs mcp/FR-XX ─────────────────────
 
 
 @pytest.mark.mvp
@@ -660,8 +625,79 @@ def test_huecos_no_incluye_tests_de_fixtures():
 
 
 @pytest.mark.mvp
+def test_requisito_bare_id_una_sola_spec_completa_prefijo(tools):
+    """T-219 | mcp/FR-004 — requisito('FR-005') con una sola spec completa el prefijo.
+
+    Si el ID viene sin prefijo (ej. 'FR-005') y existe exactamente una spec,
+    debe buscarse como '001/FR-005' automáticamente.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Solo una spec
+        spec_dir = os.path.join(tmp, "specs", "001-mvp")
+        os.makedirs(spec_dir)
+        with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
+            f.write("- **FR-005**: Validación de parámetros.\n")
+
+        os.makedirs(os.path.join(tmp, "tests"))
+
+        # ID sin prefijo — debe autocompletar a "001/FR-005"
+        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
+
+    assert resultado["encontrado"] is True, (
+        f"Con una sola spec, 'FR-005' debería encontrarse como '001/FR-005'. "
+        f"Error: {resultado.get('error')}"
+    )
+    assert "FR-005" in resultado["texto"]
+    # El id devuelto debe tener el prefijo completado automáticamente
+    assert resultado["id"] == "001/FR-005", (
+        f"El id devuelto debe ser '001/FR-005' (con prefijo autocomplete), "
+        f"se obtuvo: {resultado.get('id')!r}"
+    )
+
+
+@pytest.mark.mvp
+def test_requisito_bare_id_multiples_specs_pide_prefijo(tools):
+    """T-220 | mcp/FR-004 — requisito('FR-005') con múltiples specs devuelve error.
+
+    Si hay más de una spec y no se especifica prefijo, debe devolver un error
+    que explique que hay que indicar el prefijo (ej. '001/FR-005').
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Dos specs diferentes
+        for folder in ["001-mvp", "002-v2"]:
+            spec_dir = os.path.join(tmp, "specs", folder)
+            os.makedirs(spec_dir)
+            with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
+                f.write(f"- **FR-005**: Requisito en {folder}.\n")
+
+        os.makedirs(os.path.join(tmp, "tests"))
+
+        # ID sin prefijo con múltiples specs — debe pedir que se especifique
+        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
+
+    assert (
+        resultado["encontrado"] is False
+    ), "Con múltiples specs y sin prefijo, debe devolver encontrado=False"
+    # El error debe mencionar que hay que especificar el prefijo
+    error = resultado.get("error", "").lower()
+    assert (
+        "prefijo" in error or "spec" in error or "001/" in error or "002/" in error
+    ), f"El error debe pedir que se especifique el prefijo. Error: {resultado.get('error')!r}"
+
+
+@pytest.mark.mvp
 def test_funcion_bajo_test_rechaza_ruta_fuera_del_repo(tools):
-    """T-218 | 001/FR-MCP — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
+    """T-218 | mcp/FR-003 — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
 
     Una línea 'Prueba: ../../etc/passwd::algo' no debe ser ejecutada como path traversal.
 

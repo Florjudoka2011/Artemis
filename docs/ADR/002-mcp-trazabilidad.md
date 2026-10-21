@@ -76,12 +76,37 @@ verdad; parsear en tiempo real es suficientemente rápido para este tamaño de p
 
 ## Implementación
 
-- `mcp/artemis_trazabilidad/tools.py`: funciones puras (sin efectos secundarios)
-- `mcp/artemis_trazabilidad/server.py`: envuelve las funciones con decoradores `@mcp.tool()`
-- `mcp/artemis_trazabilidad/__init__.py`: vacío (marca el paquete)
-- `tests/unit/test_mcp_trazabilidad.py`: 12 tests T-200 a T-212, todos `@pytest.mark.mvp`
+- `mcp_servers/artemis_trazabilidad/tools.py`: funciones puras (sin efectos secundarios)
+- `mcp_servers/artemis_trazabilidad/server.py`: envuelve las funciones con decoradores `@mcp.tool()`
+- `mcp_servers/artemis_trazabilidad/__init__.py`: vacío (marca el paquete)
+- `tests/unit/test_mcp_trazabilidad.py`: tests T-200 a T-222, todos `@pytest.mark.mvp`
 - `tests/fixtures/repo_ejemplo/`: fixture con contenido conocido para tests deterministas
+  - IDs en rango **T-9XX** para distinguirlos de tests reales (T-1XX a T-2XX)
 - `.mcp.json`: registro del servidor para Claude Code
+
+---
+
+## Requisitos del MCP (`mcp/FR-XX`)
+
+Los tests de este servidor usan el espacio de nombres `mcp/FR-XX`, separado de la
+spec principal `001/FR-XX`. Esto evita falsos positivos en `huecos_trazabilidad()`.
+
+| ID | Requisito |
+|----|-----------|
+| `mcp/FR-001` | El servidor puede importarse sin instancia MCP activa |
+| `mcp/FR-002` | `buscar_test` localiza un test por T-ID y devuelve archivo y línea |
+| `mcp/FR-003` | `funcion_bajo_test` devuelve el código de la función/clase bajo test |
+| `mcp/FR-004` | `requisito` devuelve texto del requisito y tests que lo cubren |
+| `mcp/FR-005` | `estado_tareas` clasifica tareas en hechas y pendientes |
+| `mcp/FR-006` | `ultima_evidencia` devuelve el archivo de evidencia más reciente |
+| `mcp/FR-007` | `huecos_trazabilidad` detecta brechas de cobertura y IDs duplicados |
+| `mcp/FR-008` | El MCP excluye `tests/fixtures/` del recorrido para evitar contaminación |
+
+### Exclusión de fixtures
+
+`_iter_py_files()` acepta un parámetro `exclude_dirs` (default: `{"tests/fixtures"}`).
+Esto evita que los tests del fixture de prueba sean tratados como tests reales del proyecto.
+Configurable por llamada; el comportamiento por defecto protege el repositorio Artemis.
 
 ---
 

@@ -22,7 +22,10 @@ from src.schemas.figuras import (
 
 @pytest.mark.mvp
 def test_prisma_valido_completo():
-    """T-100 | 001/FR-005 — JSON válido completo pasa validación."""
+    """T-100 | 001/FR-005 — JSON válido completo pasa validación.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     p = PrismaRectangularParams(largo=100, ancho=60, alto=40)
     assert p.largo == 100.0
     assert p.ancho == 60.0
@@ -33,7 +36,10 @@ def test_prisma_valido_completo():
 
 @pytest.mark.mvp
 def test_cilindro_valido_completo():
-    """T-100 | 001/FR-005 — JSON válido de cilindro pasa validación."""
+    """T-100 | 001/FR-005 — JSON válido de cilindro pasa validación.
+
+    Prueba: src/schemas/figuras.py::CilindroParams
+    """
     c = CilindroParams(diametro=50, alto=80)
     assert c.diametro == 50.0
     assert c.alto == 80.0
@@ -44,7 +50,10 @@ def test_cilindro_valido_completo():
 
 @pytest.mark.mvp
 def test_campo_faltante_prisma():
-    """T-101 | 001/FR-005 — Campo obligatorio faltante es rechazado con campo identificado."""
+    """T-101 | 001/FR-005 — Campo obligatorio faltante es rechazado con campo identificado.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         PrismaRectangularParams(largo=100, ancho=60)  # falta alto
     errors = exc_info.value.errors()
@@ -54,7 +63,10 @@ def test_campo_faltante_prisma():
 
 @pytest.mark.mvp
 def test_campo_faltante_cilindro():
-    """T-101 | 001/FR-005 — Campo obligatorio faltante en cilindro es rechazado."""
+    """T-101 | 001/FR-005 — Campo obligatorio faltante en cilindro es rechazado.
+
+    Prueba: src/schemas/figuras.py::CilindroParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         CilindroParams(diametro=50)  # falta alto
     errors = exc_info.value.errors()
@@ -67,7 +79,10 @@ def test_campo_faltante_cilindro():
 
 @pytest.mark.mvp
 def test_tipo_incorrecto_largo():
-    """T-102 | 001/FR-005 — Tipo incorrecto (string en campo numérico) es rechazado."""
+    """T-102 | 001/FR-005 — Tipo incorrecto (string en campo numérico) es rechazado.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         PrismaRectangularParams(largo="cien", ancho=60, alto=40)
     errors = exc_info.value.errors()
@@ -80,7 +95,10 @@ def test_tipo_incorrecto_largo():
 
 @pytest.mark.mvp
 def test_valor_negativo_largo():
-    """T-103 | 001/FR-005 — Valor negativo en dimensión es rechazado."""
+    """T-103 | 001/FR-005 — Valor negativo en dimensión es rechazado.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         PrismaRectangularParams(largo=-10, ancho=60, alto=40)
     errors = exc_info.value.errors()
@@ -90,7 +108,10 @@ def test_valor_negativo_largo():
 
 @pytest.mark.mvp
 def test_valor_negativo_diametro():
-    """T-103 | 001/FR-005 — Valor negativo en diámetro de cilindro es rechazado."""
+    """T-103 | 001/FR-005 — Valor negativo en diámetro de cilindro es rechazado.
+
+    Prueba: src/schemas/figuras.py::CilindroParams
+    """
     with pytest.raises(ValidationError):
         CilindroParams(diametro=-5, alto=80)
 
@@ -100,28 +121,40 @@ def test_valor_negativo_diametro():
 
 @pytest.mark.mvp
 def test_valor_nan():
-    """T-104 | 001/FR-005 — Valor NaN es rechazado antes de construir."""
+    """T-104 | 001/FR-005 — Valor NaN es rechazado antes de construir.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError):
         PrismaRectangularParams(largo=math.nan, ancho=60, alto=40)
 
 
 @pytest.mark.mvp
 def test_valor_infinito():
-    """T-104 | 001/FR-005 — Valor infinito es rechazado antes de construir."""
+    """T-104 | 001/FR-005 — Valor infinito es rechazado antes de construir.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError):
         PrismaRectangularParams(largo=math.inf, ancho=60, alto=40)
 
 
 @pytest.mark.mvp
 def test_valor_nan_agujero_diametro():
-    """T-104 | 001/FR-005 — NaN en diametro de AgujeroParams es rechazado."""
+    """T-104 | 001/FR-005 — NaN en diametro de AgujeroParams es rechazado.
+
+    Prueba: src/schemas/figuras.py::AgujeroParams
+    """
     with pytest.raises(ValidationError):
         AgujeroParams(diametro=math.nan, cara=CaraAgujero.superior)
 
 
 @pytest.mark.mvp
 def test_valor_nan_cilindro():
-    """T-104 | 001/FR-005 — NaN en CilindroParams es rechazado."""
+    """T-104 | 001/FR-005 — NaN en CilindroParams es rechazado.
+
+    Prueba: src/schemas/figuras.py::CilindroParams
+    """
     with pytest.raises(ValidationError):
         CilindroParams(diametro=math.nan, alto=80)
 
@@ -131,7 +164,10 @@ def test_valor_nan_cilindro():
 
 @pytest.mark.mvp
 def test_valor_cero_alto():
-    """T-105 | 001/FR-005 — Valor cero en dimensión es rechazado."""
+    """T-105 | 001/FR-005 — Valor cero en dimensión es rechazado.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         PrismaRectangularParams(largo=100, ancho=60, alto=0)
     errors = exc_info.value.errors()
@@ -141,7 +177,10 @@ def test_valor_cero_alto():
 
 @pytest.mark.mvp
 def test_valor_cero_diametro_agujero():
-    """T-105 | 001/FR-005 — Diámetro de agujero = 0 es rechazado."""
+    """T-105 | 001/FR-005 — Diámetro de agujero = 0 es rechazado.
+
+    Prueba: src/schemas/figuras.py::AgujeroParams
+    """
     with pytest.raises(ValidationError):
         AgujeroParams(diametro=0, cara=CaraAgujero.superior)
 
@@ -151,7 +190,10 @@ def test_valor_cero_diametro_agujero():
 
 @pytest.mark.mvp
 def test_campo_extra_prisma():
-    """T-106 | 001/FR-005 — Campo extra no definido en el esquema es rechazado (extra='forbid')."""
+    """T-106 | 001/FR-005 — Campo extra no definido en el esquema es rechazado (extra='forbid').
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     with pytest.raises(ValidationError) as exc_info:
         PrismaRectangularParams(largo=100, ancho=60, alto=40, color="rojo")
     errors = exc_info.value.errors()
@@ -161,7 +203,10 @@ def test_campo_extra_prisma():
 
 @pytest.mark.mvp
 def test_campo_extra_agujero():
-    """T-106 | 001/FR-005 — Campo extra en AgujeroParams es rechazado."""
+    """T-106 | 001/FR-005 — Campo extra en AgujeroParams es rechazado.
+
+    Prueba: src/schemas/figuras.py::AgujeroParams
+    """
     with pytest.raises(ValidationError):
         AgujeroParams(diametro=20, cara=CaraAgujero.superior, profundidad=50)
 
@@ -171,7 +216,10 @@ def test_campo_extra_agujero():
 
 @pytest.mark.mvp
 def test_figura_tipo_desconocida():
-    """T-107 | 001/FR-005 — FiguraTipo desconocido es rechazado antes de construir."""
+    """T-107 | 001/FR-005 — FiguraTipo desconocido es rechazado antes de construir.
+
+    Prueba: src/schemas/figuras.py::FiguraTipo
+    """
     with pytest.raises(ValueError):
         FiguraTipo("triangulo")
 
@@ -181,6 +229,9 @@ def test_figura_tipo_desconocida():
 
 @pytest.mark.mvp
 def test_cara_agujero_desconocida():
-    """T-108 | 001/FR-005 — CaraAgujero desconocida es rechazada antes de construir."""
+    """T-108 | 001/FR-005 — CaraAgujero desconocida es rechazada antes de construir.
+
+    Prueba: src/schemas/figuras.py::AgujeroParams
+    """
     with pytest.raises(ValidationError):
         AgujeroParams(diametro=20, cara="diagonal")
