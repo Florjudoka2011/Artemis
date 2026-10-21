@@ -1,0 +1,10 @@
+{
+  "encontrado": true,
+  "id": "001/FR-001",
+  "texto": "- **FR-001**: El sistema DEBE ofrecer un formulario con los campos necesarios para definir",
+  "test_ids": [
+    "T-110",
+    "T-120"
+  ],
+  "FR-010_011_012_presentes": false
+}

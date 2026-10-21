@@ -1,0 +1,50 @@
+{
+  "resumen": {
+    "total_tests": 63,
+    "sin_requisito": 1,
+    "sin_prueba": 35,
+    "ids_duplicados": 7,
+    "total_requisitos": 12,
+    "sin_test": 6
+  },
+  "ids_duplicados": [
+    "T-100",
+    "T-101",
+    "T-104",
+    "T-109",
+    "T-103",
+    "T-105",
+    "T-106"
+  ],
+  "tests_sin_prueba_primeros_5": [
+    {
+      "funcion": "test_sin_linea_prueba",
+      "test_id": "T-120"
+    },
+    {
+      "funcion": "test_buscar_test_retorna_archivo_y_linea",
+      "test_id": "T-201"
+    },
+    {
+      "funcion": "test_buscar_test_retorna_ruta_relativa",
+      "test_id": "T-201b"
+    },
+    {
+      "funcion": "test_buscar_test_id_inexistente",
+      "test_id": "T-202"
+    },
+    {
+      "funcion": "test_buscar_test_sin_id_en_docstring",
+      "test_id": "T-203"
+    }
+  ],
+  "requisitos_sin_test": [
+    "001/FR-002",
+    "001/FR-003",
+    "001/FR-004",
+    "001/FR-007",
+    "001/FR-008",
+    "001/FR-009"
+  ],
+  "nota_tareas_sin_evidencia": "Control global: indica si NO hay ningún archivo de evidencia con fecha en docs/evidencia/fase1/. No es un control por tarea individual."
+}

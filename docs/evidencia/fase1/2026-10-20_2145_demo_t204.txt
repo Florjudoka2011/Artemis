@@ -1,0 +1,23 @@
+{
+  "buscar_test_T-204": {
+    "encontrado": true,
+    "archivo": "tests/unit/test_mcp_trazabilidad.py",
+    "linea": 96,
+    "funcion": "test_funcion_bajo_test_usa_linea_prueba",
+    "requisito": "001/FR-MCP"
+  },
+  "funcion_bajo_test_T-204": {
+    "encontrado": true,
+    "archivo": "mcp_servers/artemis_trazabilidad/tools.py",
+    "funcion_nombre": "funcion_bajo_test",
+    "linea": 137,
+    "codigo_primeras_5": [
+      "def funcion_bajo_test(test_id: str, repo_root: str | None = None) -> dict[str, Any]:",
+      "    \"\"\"Devuelve el código de la función/clase bajo test.",
+      "",
+      "    Usa la línea \"Prueba: ruta/archivo.py::NombreClaseOFuncion\" del docstring del test.",
+      "    Si el test no tiene esa línea, devuelve encontrado=False con error=\"no determinable\"."
+    ]
+  },
+  "nota_T-100": "T-100 está en el fixture (tests/fixtures/repo_ejemplo/) con Prueba: src/schemas/figuras.py::PrismaParams, pero el repo real tiene PrismaRectangularParams. Es una inconsistencia fixture→producción."
+}

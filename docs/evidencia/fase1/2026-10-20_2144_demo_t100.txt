@@ -1,0 +1,16 @@
+{
+  "encontrado": true,
+  "archivo": "tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py",
+  "linea": 9,
+  "funcion": "test_prisma_valido",
+  "requisito": "001/FR-005",
+  "docstring": "T-100 | 001/FR-005 — JSON válido pasa validación.\n\nPrueba: src/schemas/figuras.py::PrismaParams"
+}
+
+{
+  "encontrado": false,
+  "archivo": null,
+  "funcion_nombre": null,
+  "linea": null,
+  "codigo_primeras_5_lineas": []
+}
