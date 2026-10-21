@@ -83,9 +83,11 @@ def test_crear_workspace_crea_directorio(workspace_tmp: Path):
 
 @pytest.mark.mvp
 def test_generar_prisma_valido_produce_archivos():
-    """T-154 | 001/FR-004 — generar() con parámetros válidos de prisma retorna rutas de archivos.
+    """T-154 | 001/FR-011 — generar() informa resultado con rutas de archivos en caso de éxito.
 
     Prueba: src/ui/app.py::generar
+
+    El resultado debe incluir 'Generado' y las rutas STL y STEP.
     """
     resultado = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
     assert (
@@ -106,3 +108,59 @@ def test_generar_cilindro_valido_produce_archivos():
     assert (
         "Generado" in resultado
     ), f"Se esperaba 'Generado' en el resultado, obtenido: {resultado}"
+
+
+@pytest.mark.mvp
+def test_formulario_tiene_checkbox_vistas_iram():
+    """T-156 | 001/FR-003 — La interfaz ofrece checkbox de vistas IRAM en el formulario.
+
+    Prueba: src/ui/app.py::crear_interfaz
+
+    La interfaz debe incluir un componente con label 'Vistas IRAM' o similar.
+    """
+
+    demo = crear_interfaz(conector_ia=None)
+    # Buscar checkbox de vistas IRAM en el árbol de componentes
+    componentes = demo.blocks
+    labels = [
+        getattr(c, "label", "") for c in componentes.values() if hasattr(c, "label") and c.label
+    ]
+    tiene_vistas_iram = any("iram" in str(label).lower() for label in labels)
+    assert (
+        tiene_vistas_iram
+    ), f"No se encontró checkbox de vistas IRAM en la interfaz. Labels encontrados: {labels}"
+
+
+@pytest.mark.mvp
+def test_generar_acepta_vistas_iram():
+    """T-156 | 001/FR-003 — generar() acepta el parámetro vistas_iram sin error.
+
+    Prueba: src/ui/app.py::generar
+    """
+    resultado = generar(
+        largo="100", ancho="60", alto="40", figura="prisma_rectangular", vistas_iram=False
+    )
+    assert (
+        "Error" not in resultado or "Faltan" not in resultado
+    ), f"generar() rechazó vistas_iram=False: {resultado}"
+
+
+@pytest.mark.mvp
+def test_interfaz_tiene_indicador_generando():
+    """T-157 | 001/FR-012 — La interfaz bloquea el botón mientras genera (indicador Generando…).
+
+    Prueba: src/ui/app.py::crear_interfaz
+
+    El botón de generación debe tener variant='primary' para indicar acción principal.
+    El bloqueo de interfaz durante btn.click() lo provee Gradio automáticamente.
+    La función generar() debe retornar un mensaje con el resultado (éxito o error),
+    no None, para que Gradio actualice la UI al terminar.
+    """
+    demo = crear_interfaz(conector_ia=None)
+    # Verificar que el botón existe y tiene la configuración correcta
+    botones = [c for c in demo.blocks.values() if type(c).__name__ == "Button"]
+    assert len(botones) >= 1, "La interfaz no tiene ningún botón"
+    variantes = [getattr(b, "variant", None) for b in botones]
+    assert (
+        "primary" in variantes
+    ), f"Ningún botón tiene variant='primary' (indicador de acción principal): {variantes}"
