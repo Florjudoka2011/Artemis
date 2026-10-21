@@ -554,6 +554,77 @@ def test_huecos_comparacion_usa_id_completo_no_bare(tools):
 
 
 @pytest.mark.mvp
+def test_requisito_bare_id_una_sola_spec_completa_prefijo(tools):
+    """T-219 | 001/FR-MCP — requisito('FR-005') con una sola spec completa el prefijo.
+
+    Si el ID viene sin prefijo (ej. 'FR-005') y existe exactamente una spec,
+    debe buscarse como '001/FR-005' automáticamente.
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Solo una spec
+        spec_dir = os.path.join(tmp, "specs", "001-mvp")
+        os.makedirs(spec_dir)
+        with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
+            f.write("- **FR-005**: Validación de parámetros.\n")
+
+        os.makedirs(os.path.join(tmp, "tests"))
+
+        # ID sin prefijo — debe autocompletar a "001/FR-005"
+        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
+
+    assert resultado["encontrado"] is True, (
+        f"Con una sola spec, 'FR-005' debería encontrarse como '001/FR-005'. "
+        f"Error: {resultado.get('error')}"
+    )
+    assert "FR-005" in resultado["texto"]
+    # El id devuelto debe tener el prefijo completado automáticamente
+    assert resultado["id"] == "001/FR-005", (
+        f"El id devuelto debe ser '001/FR-005' (con prefijo autocomplete), "
+        f"se obtuvo: {resultado.get('id')!r}"
+    )
+
+
+@pytest.mark.mvp
+def test_requisito_bare_id_multiples_specs_pide_prefijo(tools):
+    """T-220 | 001/FR-MCP — requisito('FR-005') con múltiples specs devuelve error.
+
+    Si hay más de una spec y no se especifica prefijo, debe devolver un error
+    que explique que hay que indicar el prefijo (ej. '001/FR-005').
+
+    Prueba: mcp_servers/artemis_trazabilidad/tools.py::requisito
+    """
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Dos specs diferentes
+        for folder in ["001-mvp", "002-v2"]:
+            spec_dir = os.path.join(tmp, "specs", folder)
+            os.makedirs(spec_dir)
+            with open(os.path.join(spec_dir, "spec.md"), "w", encoding="utf-8") as f:
+                f.write(f"- **FR-005**: Requisito en {folder}.\n")
+
+        os.makedirs(os.path.join(tmp, "tests"))
+
+        # ID sin prefijo con múltiples specs — debe pedir que se especifique
+        resultado = tools["requisito"](req_id="FR-005", repo_root=tmp)
+
+    assert (
+        resultado["encontrado"] is False
+    ), "Con múltiples specs y sin prefijo, debe devolver encontrado=False"
+    # El error debe mencionar que hay que especificar el prefijo
+    error = resultado.get("error", "").lower()
+    assert (
+        "prefijo" in error or "spec" in error or "001/" in error or "002/" in error
+    ), f"El error debe pedir que se especifique el prefijo. Error: {resultado.get('error')!r}"
+
+
+@pytest.mark.mvp
 def test_funcion_bajo_test_rechaza_ruta_fuera_del_repo(tools):
     """T-218 | 001/FR-MCP — funcion_bajo_test rechaza ruta 'Prueba:' fuera del repositorio.
 
