@@ -1,15 +1,21 @@
-# Spec: MVP Ejemplo
+# Feature Specification: Artemis — MVP Modelo 3D desde Formulario
 
-## Functional Requirements
+**Feature Branch**: `001-mvp-modelo-formulario`
 
-### FR-005: Validación de parámetros de entrada
+**Created**: 2026-10-18
 
-Los parámetros recibidos del formulario deben ser validados antes de construir el modelo.
+---
 
-- Los valores NaN e infinito deben ser rechazados
-- Los campos obligatorios faltantes deben identificarse
-- Los campos extra no definidos deben ser rechazados
+## Requirements *(mandatory)*
 
-### FR-004: Generación de modelo 3D
+### Functional Requirements
 
-Dado un JSON válido, la aplicación genera un sólido 3D sin errores.
+- **FR-001**: El sistema DEBE ofrecer un formulario con los campos necesarios para definir
+  un prisma rectangular (largo, ancho, alto) o un cilindro (diámetro, alto).
+- **FR-004**: El sistema DEBE generar el modelo 3D con las medidas exactas indicadas, con
+  tolerancia geométrica de 0,001 mm.
+- **FR-005**: El sistema DEBE rechazar cualquier combinación de parámetros inválidos
+  (medida ≤ 0, diámetro de agujero ≥ lado menor de la cara, agujero fuera del área de la
+  cara) con un mensaje que identifique el problema específico, antes de iniciar la
+  construcción.
+- **FR-006**: El sistema DEBE exportar el modelo en STL y STEP al workspace configurado.

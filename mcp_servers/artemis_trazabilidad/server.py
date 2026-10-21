@@ -5,7 +5,7 @@ Solo lectura: permite consultar el proyecto con evidencia verificable
 (archivo y línea), sin depender de la memoria de la IA.
 
 Ejecutar:
-    python -m mcp.artemis_trazabilidad.server
+    python -m artemis_trazabilidad.server  (con PYTHONPATH=mcp_servers/)
     # o via .mcp.json (stdio transport)
 """
 

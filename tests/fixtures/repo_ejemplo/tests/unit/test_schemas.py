@@ -7,19 +7,28 @@ import pytest
 
 @pytest.mark.mvp
 def test_prisma_valido():
-    """T-100 | 001/FR-005 — JSON válido pasa validación."""
+    """T-100 | 001/FR-005 — JSON válido pasa validación.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     assert True
 
 
 @pytest.mark.mvp
 def test_campo_faltante():
-    """T-101 | 001/FR-005 — Campo obligatorio faltante es rechazado."""
+    """T-101 | 001/FR-005 — Campo obligatorio faltante es rechazado.
+
+    Prueba: src/schemas/figuras.py::PrismaRectangularParams
+    """
     assert True
 
 
 @pytest.mark.mvp
 def test_valor_nan():
-    """T-104 | 001/FR-005 — Valor NaN es rechazado."""
+    """T-104 | 001/FR-005 — Valor NaN es rechazado.
+
+    Prueba: src/schemas/figuras.py::CilindroParams
+    """
     assert True
 
 

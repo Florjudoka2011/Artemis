@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-# Hace que mcp/artemis_trazabilidad/ sea importable como `artemis_trazabilidad`
-_MCP_DIR = Path(__file__).parent.parent / "mcp"
+# Hace que mcp_servers/artemis_trazabilidad/ sea importable como `artemis_trazabilidad`
+_MCP_DIR = Path(__file__).parent.parent / "mcp_servers"
 if str(_MCP_DIR) not in sys.path:
     sys.path.insert(0, str(_MCP_DIR))
 
