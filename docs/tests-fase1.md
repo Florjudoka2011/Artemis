@@ -219,6 +219,7 @@
 | T-182 | generar() con prisma válido retorna tupla `(mensaje, ruta_stl)` con ruta `.stl` existente | `ruta_stl` no es None, termina en `.stl`, el archivo existe en disco. Cubre FR-013 (visor 3D). |
 | T-183 | crear_interfaz() incluye componente `gr.Model3D` | Al menos una instancia de `gr.Model3D` en `demo.blocks`. |
 | T-184 | `actualizar_campos("prisma_rectangular")` y `actualizar_campos("cilindro")` devuelven visibilidades correctas | Prisma: largo=True, ancho=True, alto=True, diametro=False. Cilindro: largo=False, ancho=False, alto=True, diametro=True. **Nota TDD**: escrito DESPUÉS de la implementación (la función ya existía desde T-181/feat(T-175)). Agrega cobertura de valores concretos. |
+| T-185 | `iniciar()` pasa `allowed_paths=[str(_WORKSPACE_BASE)]` a `launch()` | `allowed_paths` no es None y contiene la ruta del workspace configurado. Sin esto Gradio no sirve el STL al visor gr.Model3D (HTTP 403). Fuente: gradio.app/docs/gradio/blocks#blocks-launch |
 
 ---
 
@@ -259,7 +260,7 @@ Los siguientes tests deben pasar para considerar el MVP completo:
 
 **Formulario**: T-150, T-151, T-152, T-153, T-154, T-155, T-156, T-157, T-158, T-159
 
-**Workspace / campos dinámicos / visor 3D**: T-180, T-181, T-182, T-183, T-184
+**Workspace / campos dinámicos / visor 3D**: T-180, T-181, T-182, T-183, T-184, T-185
 
 ---
 
