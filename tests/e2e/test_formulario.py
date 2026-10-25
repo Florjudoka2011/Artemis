@@ -395,3 +395,40 @@ def test_iniciar_usa_host_y_puerto_seguros(monkeypatch):
     assert (
         llamadas[0].get("server_port") == 7860
     ), f"server_port debe ser 7860, obtenido: {llamadas[0].get('server_port')}"
+
+
+@pytest.mark.mvp
+def test_iniciar_autoriza_workspace_en_allowed_paths(monkeypatch):
+    """T-185 | 001/FR-013 — iniciar() incluye el workspace en allowed_paths de launch().
+
+    Prueba: src/ui/app.py::iniciar
+
+    Gradio solo sirve archivos de rutas en allowed_paths. Sin esto, gr.Model3D
+    no puede mostrar el STL generado en C:\\Artemis\\workspace (error de acceso
+    denegado en el visor). La unica ruta autorizada debe ser _WORKSPACE_BASE,
+    no carpetas mas amplias ni todo el disco.
+    """
+    from src.ui.app import iniciar
+    from src.ui.workspace import _WORKSPACE_BASE
+
+    import gradio as gr
+
+    llamadas: list[dict] = []
+
+    def mock_launch(self, **kwargs):  # type: ignore[override]
+        llamadas.append(kwargs)
+        return None, None, None
+
+    monkeypatch.setattr(gr.Blocks, "launch", mock_launch)
+    iniciar()
+
+    assert len(llamadas) == 1
+    allowed = llamadas[0].get("allowed_paths")
+    assert allowed is not None, (
+        "launch() debe recibir allowed_paths. "
+        "Sin esto Gradio no sirve archivos del workspace al visor 3D."
+    )
+    workspace_str = str(_WORKSPACE_BASE)
+    assert any(str(p) == workspace_str for p in allowed), (
+        f"allowed_paths debe contener '{workspace_str}'. " f"Obtenido: {allowed}"
+    )
