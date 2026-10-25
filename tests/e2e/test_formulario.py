@@ -212,6 +212,45 @@ def test_generar_figura_desconocida_retorna_error():
 
 
 @pytest.mark.mvp
+def test_formulario_campos_dinamicos_por_figura():
+    """T-175 | 001/FR-001 — El formulario muestra solo los campos de la figura elegida.
+
+    Prueba: src/ui/app.py::crear_interfaz
+
+    Al elegir 'prisma_rectangular' deben mostrarse largo, ancho, alto y ocultarse diametro.
+    Al elegir 'cilindro' deben mostrarse diametro, alto y ocultarse largo, ancho.
+    La interfaz debe tener un event handler en el dropdown de figura que actualice
+    la visibilidad de los campos.
+    """
+    import gradio as gr
+
+    demo = crear_interfaz(conector_ia=None)
+
+    # Verificar que el dropdown de figura tiene al menos un event listener registrado
+    # (figura.change → actualizar visibilidad de campos)
+    figura_comp = None
+    for comp in demo.blocks.values():
+        if isinstance(comp, gr.Dropdown) and getattr(comp, "label", "") == "Figura":
+            figura_comp = comp
+            break
+
+    assert figura_comp is not None, "No se encontro el dropdown de Figura en la interfaz"
+
+    # Verificar que hay al menos un event registrado en el dropdown
+    # Gradio registra los events en demo.fns; cada fn tiene inputs/outputs
+    # Buscamos una fn cuyo trigger sea el componente figura
+    tiene_change_handler = any(
+        hasattr(fn, "targets") and any(figura_comp._id == t[0] for t in fn.targets)
+        for fn in demo.fns.values()
+        if hasattr(fn, "targets")
+    )
+    assert tiene_change_handler, (
+        "El dropdown 'Figura' no tiene un event handler de cambio registrado. "
+        "Se necesita figura.change(...) para actualizar la visibilidad de campos."
+    )
+
+
+@pytest.mark.mvp
 def test_generar_usa_workspace_configurado(monkeypatch, tmp_path):
     """T-174 | 001/FR-010 — generar() guarda archivos en el workspace base configurado.
 
