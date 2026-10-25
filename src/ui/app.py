@@ -122,3 +122,17 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         )
 
     return demo
+
+
+def iniciar() -> None:
+    """Lanza la interfaz Gradio en 127.0.0.1:7860 (loopback exclusivo).
+
+    server_name y server_port son fijos por requisito de seguridad (T-173):
+    la app nunca escucha en 0.0.0.0 ni en ninguna IP externa.
+    """
+    demo = crear_interfaz()
+    demo.launch(server_name="127.0.0.1", server_port=7860)
+
+
+if __name__ == "__main__":
+    iniciar()
