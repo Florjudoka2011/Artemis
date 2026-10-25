@@ -209,3 +209,36 @@ def test_generar_figura_desconocida_retorna_error():
     assert (
         "desconocida" in resultado.lower() or "Error" in resultado
     ), f"Se esperaba mensaje de error con figura desconocida, obtenido: {resultado}"
+
+
+@pytest.mark.mvp
+def test_iniciar_usa_host_y_puerto_seguros(monkeypatch):
+    """T-173 | 001/FR-010 — iniciar() lanza la app en 127.0.0.1:7860 (loopback exclusivo).
+
+    Prueba: src/ui/app.py::iniciar
+
+    Requisito de seguridad: la app nunca escucha en 0.0.0.0 ni en una IP externa.
+    server_name='127.0.0.1' y server_port=7860 son fijos e innegociables.
+    """
+    from src.ui.app import iniciar  # noqa: PLC0415
+
+    llamadas: list[dict] = []
+
+    import gradio as gr
+
+    def mock_launch(self, **kwargs):  # type: ignore[override]
+        llamadas.append(kwargs)
+        return None, None, None
+
+    monkeypatch.setattr(gr.Blocks, "launch", mock_launch)
+    iniciar()
+
+    assert (
+        len(llamadas) == 1
+    ), f"launch() debio llamarse exactamente 1 vez, se llamo {len(llamadas)}"
+    assert (
+        llamadas[0].get("server_name") == "127.0.0.1"
+    ), f"server_name debe ser '127.0.0.1', obtenido: {llamadas[0].get('server_name')}"
+    assert (
+        llamadas[0].get("server_port") == 7860
+    ), f"server_port debe ser 7860, obtenido: {llamadas[0].get('server_port')}"

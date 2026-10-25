@@ -33,6 +33,7 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-160 | 001/FR-001 | tests/e2e/test_formulario.py | `test_formulario_cilindro_campo_vacio` |
 | T-161 | 001/FR-005 | tests/e2e/test_formulario.py | `test_generar_cilindro_parametro_invalido_retorna_error` |
 | T-162 | 001/FR-001 | tests/e2e/test_formulario.py | `test_generar_figura_desconocida_retorna_error` |
+| T-173 | 001/FR-010 | tests/e2e/test_formulario.py | `test_iniciar_usa_host_y_puerto_seguros` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -43,6 +44,6 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 38
+**Total tests trazados**: 39
 **Feature IDs cubiertos**: 9
 
