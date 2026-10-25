@@ -212,6 +212,32 @@ def test_generar_figura_desconocida_retorna_error():
 
 
 @pytest.mark.mvp
+def test_generar_usa_workspace_configurado(monkeypatch, tmp_path):
+    """T-174 | 001/FR-010 — generar() guarda archivos en el workspace base configurado.
+
+    Prueba: src/ui/app.py::generar + src/ui/workspace.py::_WORKSPACE_BASE
+
+    Los archivos NO deben guardarse en AppData\\Local\\Temp ni en rutas temporales del
+    sistema. El workspace base es C:\\Artemis\\workspace (o el valor de _WORKSPACE_BASE).
+    """
+    import src.ui.workspace as ws_mod
+
+    monkeypatch.setattr(ws_mod, "_WORKSPACE_BASE", tmp_path)
+
+    resultado = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
+
+    assert "Generado" in resultado, f"Se esperaba 'Generado', obtenido: {resultado}"
+    partes = resultado.replace("Generado: ", "").split(", ")
+    ruta_stl = partes[0].strip()
+    from pathlib import Path
+
+    assert Path(ruta_stl).is_relative_to(tmp_path), (
+        f"La ruta '{ruta_stl}' no esta bajo el workspace configurado '{tmp_path}'. "
+        f"Los archivos se estan guardando en una ruta temporal del sistema."
+    )
+
+
+@pytest.mark.mvp
 def test_iniciar_usa_host_y_puerto_seguros(monkeypatch):
     """T-173 | 001/FR-010 — iniciar() lanza la app en 127.0.0.1:7860 (loopback exclusivo).
 
