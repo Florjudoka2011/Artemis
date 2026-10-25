@@ -97,10 +97,25 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             )
 
         with gr.Row():
-            largo = gr.Textbox(label="Largo (mm)", value="")
-            ancho = gr.Textbox(label="Ancho (mm)", value="")
-            alto = gr.Textbox(label="Alto (mm)", value="")
-            diametro = gr.Textbox(label="Diámetro (mm)", value="")
+            largo = gr.Textbox(label="Largo (mm)", value="", visible=True)
+            ancho = gr.Textbox(label="Ancho (mm)", value="", visible=True)
+            alto = gr.Textbox(label="Alto (mm)", value="", visible=True)
+            diametro = gr.Textbox(label="Diámetro (mm)", value="", visible=False)
+
+        def actualizar_campos(fig: str):
+            es_prisma = fig == "prisma_rectangular"
+            return (
+                gr.update(visible=es_prisma),
+                gr.update(visible=es_prisma),
+                gr.update(visible=True),
+                gr.update(visible=not es_prisma),
+            )
+
+        figura.change(
+            fn=actualizar_campos,
+            inputs=figura,
+            outputs=[largo, ancho, alto, diametro],
+        )
 
         with gr.Row():
             vistas_iram = gr.Checkbox(
