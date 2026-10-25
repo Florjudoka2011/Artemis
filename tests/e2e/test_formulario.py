@@ -212,6 +212,57 @@ def test_generar_figura_desconocida_retorna_error():
 
 
 @pytest.mark.mvp
+def test_visor_3d_recibe_ruta_stl_valida(monkeypatch, tmp_path):
+    """T-176 | 001/FR-013 — generar() devuelve la ruta STL para el visor 3D.
+
+    Prueba: src/ui/app.py::generar
+
+    La funcion debe retornar una tupla (mensaje: str, ruta_stl: str | None).
+    La ruta_stl debe apuntar a un archivo .stl existente tras una generacion exitosa.
+    gr.Model3D acepta .stl segun la documentacion oficial de Gradio (gr.Model3D.__doc__).
+    """
+    import src.ui.workspace as ws_mod
+
+    monkeypatch.setattr(ws_mod, "_WORKSPACE_BASE", tmp_path)
+
+    resultado = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
+
+    assert isinstance(
+        resultado, tuple
+    ), f"generar() debe retornar una tupla (mensaje, ruta_stl), obtenido: {type(resultado)}"
+    assert (
+        len(resultado) == 2
+    ), f"La tupla debe tener 2 elementos (mensaje, ruta_stl), obtenida: {resultado}"
+    mensaje, ruta_stl = resultado
+    assert "Generado" in mensaje, f"Primer elemento debe ser mensaje de exito: {mensaje}"
+    assert ruta_stl is not None, "El segundo elemento (ruta_stl) no debe ser None"
+    from pathlib import Path
+
+    assert (
+        Path(ruta_stl).suffix == ".stl"
+    ), f"La ruta debe apuntar a un .stl (formato aceptado por gr.Model3D), obtenido: {ruta_stl}"
+    assert Path(ruta_stl).exists(), f"El archivo STL no existe: {ruta_stl}"
+
+
+@pytest.mark.mvp
+def test_formulario_tiene_visor_3d():
+    """T-177 | 001/FR-013 — La interfaz incluye un componente Model3D como visor.
+
+    Prueba: src/ui/app.py::crear_interfaz
+
+    Verifica que la interfaz tiene un gr.Model3D en sus bloques.
+    """
+    import gradio as gr
+
+    demo = crear_interfaz(conector_ia=None)
+    tiene_model3d = any(isinstance(c, gr.Model3D) for c in demo.blocks.values())
+    assert tiene_model3d, (
+        "La interfaz no tiene componente gr.Model3D. "
+        "Se necesita para mostrar el objeto generado en 3D."
+    )
+
+
+@pytest.mark.mvp
 def test_formulario_campos_dinamicos_por_figura():
     """T-175 | 001/FR-001 — El formulario muestra solo los campos de la figura elegida.
 
