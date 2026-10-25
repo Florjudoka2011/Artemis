@@ -65,10 +65,8 @@ def generar(
     from src.recipes import prisma_rectangular, cilindro
     from src.export.solid import exportar_stl, exportar_step
     from src.ui.workspace import crear_workspace
-    import tempfile
-    from pathlib import Path
 
-    ws = crear_workspace(base=Path(tempfile.mkdtemp()), figura=figura)
+    ws = crear_workspace(figura=figura)
     if figura == "prisma_rectangular":
         solido = prisma_rectangular.construir(params)
     else:
