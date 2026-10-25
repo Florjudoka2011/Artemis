@@ -156,6 +156,20 @@ en disposición normalizada ISO E, exportable también como PNG.
 
 ---
 
+## Phase 7 — US4: Visor 3D integrado
+
+**Story goal**: La docente ve el modelo generado directamente en el formulario y puede
+girarlo y hacer zoom sin salir de la app.
+
+**Independent test criteria**: generar() devuelve (mensaje, ruta_stl) con ruta válida;
+crear_interfaz() incluye gr.Model3D conectado al output de btn.click.
+
+- [X] T042 [US4] Agregar test T-176 (rojo): generar() debe retornar (mensaje, ruta_stl) con .stl válido en src/ui/app.py
+- [X] T043 [US4] Agregar test T-177 (rojo): crear_interfaz() debe incluir gr.Model3D
+- [X] T044 [US4] Implementar: generar() retorna tuple[str, str|None]; crear_interfaz() agrega gr.Model3D con outputs=[salida, visor] en src/ui/app.py
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

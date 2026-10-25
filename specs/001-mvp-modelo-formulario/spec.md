@@ -110,6 +110,30 @@ compartidas consistentes.
 
 ---
 
+### User Story 4 — Visualizar el modelo 3D en el formulario (Priority: P4)
+
+La docente genera un modelo y puede girarlo, acercarlo y alejarlo directamente en el
+formulario sin salir de la app, usando el visor 3D integrado.
+
+**Why this priority**: El visor cierra el ciclo de feedback inmediato: la docente ve
+el resultado antes de exportar. Reduce errores de dimensionado y aumenta la confianza
+en lo generado. Depende de US1 (necesita el STL generado).
+
+**Independent Test**: Generar un prisma (100×60×40) y verificar que el visor recibe
+una ruta `.stl` válida que apunta a un archivo existente. No depende de IA ni de US2/US3.
+
+**Acceptance Scenarios**:
+
+1. **Given** la docente genera un prisma o cilindro con parámetros válidos,
+   **When** el formulario retorna el resultado,
+   **Then** el visor 3D muestra el modelo y la docente puede girarlo y hacer zoom.
+
+2. **Given** la docente ingresa parámetros inválidos y el formulario devuelve error,
+   **When** el formulario retorna el error,
+   **Then** el visor 3D queda vacío (sin modelo previo visible en el nuevo intento).
+
+---
+
 ### Edge Cases
 
 - ¿Qué pasa si el workspace configurado no existe o no tiene permisos de escritura?
@@ -157,6 +181,9 @@ compartidas consistentes.
 - **FR-012**: Durante la construcción del sólido, el sistema DEBE mostrar un indicador
   visual (mensaje "Generando…" o equivalente) y bloquear la interfaz hasta completar o
   fallar.
+- **FR-013**: El sistema DEBE mostrar el modelo 3D generado en un visor interactivo
+  integrado en el formulario (gr.Model3D, formato STL). El visor permite girar y hacer zoom
+  sin salir de la app. En caso de error, el visor queda vacío.
 
 ### Key Entities
 

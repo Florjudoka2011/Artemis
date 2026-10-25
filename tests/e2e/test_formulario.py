@@ -50,11 +50,11 @@ def test_formulario_campo_vacio():
 
     El resultado debe indicar qué campos faltan, no construir el sólido.
     """
-    resultado = generar(largo="", ancho="60", alto="40", figura="prisma_rectangular")
-    assert resultado is not None
+    mensaje, ruta = generar(largo="", ancho="60", alto="40", figura="prisma_rectangular")
+    assert mensaje is not None
     assert (
-        "largo" in str(resultado).lower()
-    ), f"El resultado debería mencionar el campo faltante 'largo', obtenido: {resultado}"
+        "largo" in str(mensaje).lower()
+    ), f"El resultado debería mencionar el campo faltante 'largo', obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -89,13 +89,11 @@ def test_generar_prisma_valido_produce_archivos():
 
     El resultado debe incluir 'Generado' y las rutas STL y STEP.
     """
-    resultado = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
+    mensaje, _ = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
+    assert "Generado" in mensaje, f"Se esperaba 'Generado' en el resultado, obtenido: {mensaje}"
     assert (
-        "Generado" in resultado
-    ), f"Se esperaba 'Generado' en el resultado, obtenido: {resultado}"
-    assert (
-        ".stl" in resultado.lower() or ".step" in resultado.lower()
-    ), f"Se esperaban rutas STL/STEP, obtenido: {resultado}"
+        ".stl" in mensaje.lower() or ".step" in mensaje.lower()
+    ), f"Se esperaban rutas STL/STEP, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -104,10 +102,8 @@ def test_generar_cilindro_valido_produce_archivos():
 
     Prueba: src/ui/app.py::generar
     """
-    resultado = generar(diametro="50", alto="80", figura="cilindro")
-    assert (
-        "Generado" in resultado
-    ), f"Se esperaba 'Generado' en el resultado, obtenido: {resultado}"
+    mensaje, _ = generar(diametro="50", alto="80", figura="cilindro")
+    assert "Generado" in mensaje, f"Se esperaba 'Generado' en el resultado, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -137,12 +133,12 @@ def test_generar_acepta_vistas_iram():
 
     Prueba: src/ui/app.py::generar
     """
-    resultado = generar(
+    mensaje, _ = generar(
         largo="100", ancho="60", alto="40", figura="prisma_rectangular", vistas_iram=False
     )
     assert (
-        "Error" not in resultado or "Faltan" not in resultado
-    ), f"generar() rechazó vistas_iram=False: {resultado}"
+        "Error" not in mensaje or "Faltan" not in mensaje
+    ), f"generar() rechazó vistas_iram=False: {mensaje}"
 
 
 # T-157 / FR-012 eliminado: el indicador "Generando..." es comportamiento automatico de
@@ -159,8 +155,8 @@ def test_generar_prisma_parametro_invalido_retorna_error():
     largo=0 pasa la validacion de campo vacio pero ValidationError en Pydantic;
     la funcion debe capturarlo y retornar "Error de validacion: ...".
     """
-    resultado = generar(largo="0", ancho="60", alto="40", figura="prisma_rectangular")
-    assert "Error" in resultado, f"Se esperaba mensaje de error con largo=0, obtenido: {resultado}"
+    mensaje, _ = generar(largo="0", ancho="60", alto="40", figura="prisma_rectangular")
+    assert "Error" in mensaje, f"Se esperaba mensaje de error con largo=0, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -178,10 +174,10 @@ def test_formulario_cilindro_campo_vacio(kwargs, campo_faltante):
 
     El resultado debe indicar que el campo obligatorio falta.
     """
-    resultado = generar(**kwargs)
+    mensaje, _ = generar(**kwargs)
     assert (
-        campo_faltante in resultado.lower()
-    ), f"Se esperaba '{campo_faltante}' en el mensaje, obtenido: {resultado}"
+        campo_faltante in mensaje.lower()
+    ), f"Se esperaba '{campo_faltante}' en el mensaje, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -193,10 +189,8 @@ def test_generar_cilindro_parametro_invalido_retorna_error():
     diametro=0 pasa la validacion de campo vacio pero ValidationError en Pydantic;
     la funcion debe capturarlo y retornar "Error de validacion: ...".
     """
-    resultado = generar(diametro="0", alto="80", figura="cilindro")
-    assert (
-        "Error" in resultado
-    ), f"Se esperaba mensaje de error con diametro=0, obtenido: {resultado}"
+    mensaje, _ = generar(diametro="0", alto="80", figura="cilindro")
+    assert "Error" in mensaje, f"Se esperaba mensaje de error con diametro=0, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -205,10 +199,10 @@ def test_generar_figura_desconocida_retorna_error():
 
     Prueba: src/ui/app.py::generar
     """
-    resultado = generar(figura="hexagono")
+    mensaje, _ = generar(figura="hexagono")
     assert (
-        "desconocida" in resultado.lower() or "Error" in resultado
-    ), f"Se esperaba mensaje de error con figura desconocida, obtenido: {resultado}"
+        "desconocida" in mensaje.lower() or "Error" in mensaje
+    ), f"Se esperaba mensaje de error con figura desconocida, obtenido: {mensaje}"
 
 
 @pytest.mark.mvp
@@ -314,11 +308,10 @@ def test_generar_usa_workspace_configurado(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ws_mod, "_WORKSPACE_BASE", tmp_path)
 
-    resultado = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
+    mensaje, ruta_stl = generar(largo="100", ancho="60", alto="40", figura="prisma_rectangular")
 
-    assert "Generado" in resultado, f"Se esperaba 'Generado', obtenido: {resultado}"
-    partes = resultado.replace("Generado: ", "").split(", ")
-    ruta_stl = partes[0].strip()
+    assert "Generado" in mensaje, f"Se esperaba 'Generado', obtenido: {mensaje}"
+    assert ruta_stl is not None, "ruta_stl no debe ser None en caso de exito"
     from pathlib import Path
 
     assert Path(ruta_stl).is_relative_to(tmp_path), (

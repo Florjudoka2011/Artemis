@@ -19,11 +19,11 @@ def generar(
     diametro: str = "",
     figura: str = "prisma_rectangular",
     vistas_iram: bool = False,
-) -> str:
+) -> tuple[str, str | None]:
     """Valida los parámetros del formulario y construye el sólido.
 
-    Devuelve un mensaje de error si faltan campos obligatorios,
-    o un mensaje de éxito con la ruta de los archivos generados.
+    Retorna (mensaje, ruta_stl) donde ruta_stl es None en caso de error.
+    ruta_stl apunta al archivo .stl para el visor 3D (gr.Model3D acepta .stl).
     """
     faltantes: list[str] = []
 
@@ -33,7 +33,7 @@ def generar(
             if not valor or not valor.strip():
                 faltantes.append(nombre)
         if faltantes:
-            return f"Faltan campos obligatorios: {', '.join(faltantes)}"
+            return f"Faltan campos obligatorios: {', '.join(faltantes)}", None
 
         try:
             params = PrismaRectangularParams(
@@ -42,7 +42,7 @@ def generar(
                 alto=float(alto),
             )
         except (ValidationError, ValueError) as exc:
-            return f"Error de validación: {exc}"
+            return f"Error de validación: {exc}", None
 
     elif figura == "cilindro":
         campos = {"diametro": diametro, "alto": alto}
@@ -50,7 +50,7 @@ def generar(
             if not valor or not valor.strip():
                 faltantes.append(nombre)
         if faltantes:
-            return f"Faltan campos obligatorios: {', '.join(faltantes)}"
+            return f"Faltan campos obligatorios: {', '.join(faltantes)}", None
 
         try:
             params = CilindroParams(
@@ -58,9 +58,9 @@ def generar(
                 alto=float(alto),
             )
         except (ValidationError, ValueError) as exc:
-            return f"Error de validación: {exc}"
+            return f"Error de validación: {exc}", None
     else:
-        return f"Figura desconocida: {figura}"
+        return f"Figura desconocida: {figura}", None
 
     from src.recipes import prisma_rectangular, cilindro
     from src.export.solid import exportar_stl, exportar_step
@@ -75,7 +75,7 @@ def generar(
     ruta_stl = exportar_stl(solido, ws / f"{figura}.stl")
     ruta_step = exportar_step(solido, ws / f"{figura}.step")
 
-    return f"Generado: {ruta_stl}, {ruta_step}"
+    return f"Generado: {ruta_stl}, {ruta_step}", str(ruta_stl)
 
 
 def crear_interfaz(conector_ia: Any = None) -> Any:
@@ -127,11 +127,12 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         btn = gr.Button("Generar", variant="primary")
         salida = gr.Textbox(label="Resultado", interactive=False)
+        visor = gr.Model3D(label="Vista 3D", value=None)
 
         btn.click(
             fn=generar,
             inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
-            outputs=salida,
+            outputs=[salida, visor],
         )
 
     return demo
