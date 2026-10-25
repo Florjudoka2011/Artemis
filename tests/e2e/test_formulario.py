@@ -299,10 +299,11 @@ def test_formulario_campos_dinamicos_por_figura():
 def test_generar_usa_workspace_configurado(monkeypatch, tmp_path):
     """T-174 | 001/FR-010 — generar() guarda archivos en el workspace base configurado.
 
-    Prueba: src/ui/app.py::generar + src/ui/workspace.py::_WORKSPACE_BASE
+    Prueba: src/ui/app.py::generar
 
     Los archivos NO deben guardarse en AppData\\Local\\Temp ni en rutas temporales del
-    sistema. El workspace base es C:\\Artemis\\workspace (o el valor de _WORKSPACE_BASE).
+    sistema. El workspace base es C:\\Artemis\\workspace (valor de _WORKSPACE_BASE en
+    src/ui/workspace.py).
     """
     import src.ui.workspace as ws_mod
 
