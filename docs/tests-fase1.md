@@ -206,6 +206,19 @@
 | T-156 | crear_interfaz() tiene checkbox "Vistas IRAM" | Label 'Vistas IRAM' presente en demo.blocks. Escrito ANTES de implementación (TDD correcto). |
 | T-158 | generar() acepta el parámetro vistas_iram sin error | No TypeError al pasar vistas_iram=False. Escrito ANTES de implementación (TDD correcto). |
 | T-157 | La interfaz tiene botón con variant='primary' (bloqueo Gradio automático durante generación) | Al menos un Button con variant='primary'. btn.click() con fn=generar actualiza UI al terminar. Escrito ANTES de implementar (T-157 pasó de inmediato: la implementación ya usaba variant='primary'). |
+| T-159 | generar() con parámetros de prisma inválidos (largo vacío) retorna mensaje de error y None | `(mensaje, ruta_stl)` donde mensaje contiene 'Faltan' y ruta_stl es None. |
+
+---
+
+## Tests de workspace y campos dinámicos (US4)
+
+| ID | Caso | Resultado esperado |
+|---|---|---|
+| T-180 | generar() guarda archivos en `C:/Artemis/workspace`, no en AppData\Temp | La ruta del STL retornado empieza con el workspace configurado en `_WORKSPACE_BASE`. **Nota TDD**: escrito ANTES de la corrección del bug (commit `fix(T-174)`). |
+| T-181 | crear_interfaz() registra handler `figura.change` con `actualizar_campos` | `demo.fns` contiene al menos una entrada cuyo `targets` incluye el componente Figura (Dropdown). Verifica que el evento esté registrado, no los valores devueltos. |
+| T-182 | generar() con prisma válido retorna tupla `(mensaje, ruta_stl)` con ruta `.stl` existente | `ruta_stl` no es None, termina en `.stl`, el archivo existe en disco. Cubre FR-013 (visor 3D). |
+| T-183 | crear_interfaz() incluye componente `gr.Model3D` | Al menos una instancia de `gr.Model3D` en `demo.blocks`. |
+| T-184 | `actualizar_campos("prisma_rectangular")` y `actualizar_campos("cilindro")` devuelven visibilidades correctas | Prisma: largo=True, ancho=True, alto=True, diametro=False. Cilindro: largo=False, ancho=False, alto=True, diametro=True. **Nota TDD**: escrito DESPUÉS de la implementación (la función ya existía desde T-181/feat(T-175)). Agrega cobertura de valores concretos. |
 
 ---
 
@@ -244,7 +257,9 @@ Los siguientes tests deben pasar para considerar el MVP completo:
 
 **Representaciones IRAM**: T-120, T-121, T-122, T-123, T-124
 
-**Formulario**: T-150, T-151, T-152, T-153, T-154, T-155, T-156, T-157, T-158
+**Formulario**: T-150, T-151, T-152, T-153, T-154, T-155, T-156, T-157, T-158, T-159
+
+**Workspace / campos dinámicos / visor 3D**: T-180, T-181, T-182, T-183, T-184
 
 ---
 

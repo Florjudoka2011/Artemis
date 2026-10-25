@@ -207,7 +207,7 @@ def test_generar_figura_desconocida_retorna_error():
 
 @pytest.mark.mvp
 def test_visor_3d_recibe_ruta_stl_valida(monkeypatch, tmp_path):
-    """T-176 | 001/FR-013 — generar() devuelve la ruta STL para el visor 3D.
+    """T-182 | 001/FR-013 — generar() devuelve la ruta STL para el visor 3D.
 
     Prueba: src/ui/app.py::generar
 
@@ -240,7 +240,7 @@ def test_visor_3d_recibe_ruta_stl_valida(monkeypatch, tmp_path):
 
 @pytest.mark.mvp
 def test_formulario_tiene_visor_3d():
-    """T-177 | 001/FR-013 — La interfaz incluye un componente Model3D como visor.
+    """T-183 | 001/FR-013 — La interfaz incluye un componente Model3D como visor.
 
     Prueba: src/ui/app.py::crear_interfaz
 
@@ -258,14 +258,12 @@ def test_formulario_tiene_visor_3d():
 
 @pytest.mark.mvp
 def test_formulario_campos_dinamicos_por_figura():
-    """T-175 | 001/FR-001 — El formulario muestra solo los campos de la figura elegida.
+    """T-181 | 001/FR-001 — Formulario: handler de cambio registrado en dropdown figura.
 
     Prueba: src/ui/app.py::crear_interfaz
 
-    Al elegir 'prisma_rectangular' deben mostrarse largo, ancho, alto y ocultarse diametro.
-    Al elegir 'cilindro' deben mostrarse diametro, alto y ocultarse largo, ancho.
     La interfaz debe tener un event handler en el dropdown de figura que actualice
-    la visibilidad de los campos.
+    la visibilidad de los campos al cambiar la seleccion.
     """
     import gradio as gr
 
@@ -296,8 +294,53 @@ def test_formulario_campos_dinamicos_por_figura():
 
 
 @pytest.mark.mvp
+def test_actualizar_campos_visibilidad_por_figura():
+    """T-184 | 001/FR-001 — actualizar_campos() devuelve visibilidad correcta por figura.
+
+    Prueba: src/ui/app.py::crear_interfaz (funcion interna actualizar_campos)
+
+    Prisma: largo visible, ancho visible, alto visible, diametro oculto.
+    Cilindro: largo oculto, ancho oculto, alto visible, diametro visible.
+
+    Nota TDD: escrito DESPUES de la implementacion (que entro con T-181/feat(T-175)).
+    T-181 solo verificaba que el handler existia; este test verifica los valores
+    concretos de visibilidad. La funcion actualizar_campos ya estaba implementada.
+    """
+    import gradio as gr
+
+    demo = crear_interfaz(conector_ia=None)
+
+    # Recuperar la funcion actualizar_campos del primer fn que tenga el dropdown de Figura
+    figura_comp = next(
+        c
+        for c in demo.blocks.values()
+        if isinstance(c, gr.Dropdown) and getattr(c, "label", "") == "Figura"
+    )
+    fn_record = next(
+        fn
+        for fn in demo.fns.values()
+        if hasattr(fn, "targets") and any(figura_comp._id == t[0] for t in fn.targets)
+    )
+    actualizar = fn_record.fn
+
+    # Caso prisma_rectangular
+    largo_u, ancho_u, alto_u, diametro_u = actualizar("prisma_rectangular")
+    assert largo_u["visible"] is True, "largo debe ser visible para prisma_rectangular"
+    assert ancho_u["visible"] is True, "ancho debe ser visible para prisma_rectangular"
+    assert alto_u["visible"] is True, "alto debe ser visible para prisma_rectangular"
+    assert diametro_u["visible"] is False, "diametro debe estar oculto para prisma_rectangular"
+
+    # Caso cilindro
+    largo_u, ancho_u, alto_u, diametro_u = actualizar("cilindro")
+    assert largo_u["visible"] is False, "largo debe estar oculto para cilindro"
+    assert ancho_u["visible"] is False, "ancho debe estar oculto para cilindro"
+    assert alto_u["visible"] is True, "alto debe ser visible para cilindro"
+    assert diametro_u["visible"] is True, "diametro debe ser visible para cilindro"
+
+
+@pytest.mark.mvp
 def test_generar_usa_workspace_configurado(monkeypatch, tmp_path):
-    """T-174 | 001/FR-010 — generar() guarda archivos en el workspace base configurado.
+    """T-180 | 001/FR-010 — generar() guarda archivos en el workspace base configurado.
 
     Prueba: src/ui/app.py::generar
 
