@@ -432,3 +432,69 @@ def test_iniciar_autoriza_workspace_en_allowed_paths(monkeypatch):
     assert any(str(p) == workspace_str for p in allowed), (
         f"allowed_paths debe contener '{workspace_str}'. " f"Obtenido: {allowed}"
     )
+
+
+@pytest.mark.mvp
+def test_interfaz_usa_visor_html_threejs():
+    """T-186 | 001/FR-013 — crear_interfaz() usa gr.HTML para el visor (no gr.Model3D).
+
+    Prueba: src/ui/app.py::crear_interfaz
+
+    gr.Model3D usa Babylon.js con WebGPU que falla en Brave/Edge con errores
+    'Texture randomSampler not found' y 'createBindGroup on GPUDevice'.
+    El visor reemplazante usa gr.HTML con Three.js (WebGL).
+    El componente debe tener elem_id='visor-3d'.
+    """
+    import gradio as gr
+
+    demo = crear_interfaz(conector_ia=None)
+
+    # No debe existir gr.Model3D
+    tiene_model3d = any(isinstance(c, gr.Model3D) for c in demo.blocks.values())
+    assert not tiene_model3d, (
+        "La interfaz no debe usar gr.Model3D (falla WebGPU en Brave/Edge). "
+        "Usar gr.HTML con Three.js (WebGL)."
+    )
+
+    # Debe existir gr.HTML con elem_id="visor-3d"
+    visor = next(
+        (
+            c
+            for c in demo.blocks.values()
+            if isinstance(c, gr.HTML) and getattr(c, "elem_id", None) == "visor-3d"
+        ),
+        None,
+    )
+    assert visor is not None, (
+        "La interfaz debe tener un gr.HTML con elem_id='visor-3d'. "
+        "Es el visor Three.js que reemplaza a gr.Model3D."
+    )
+
+
+@pytest.mark.mvp
+def test_make_viewer_html_contiene_ruta_stl(tmp_path):
+    """T-187 | 001/FR-013 — make_viewer_html() produce HTML con la ruta STL embebida.
+
+    Prueba: src/ui/visor.py::make_viewer_html
+
+    El HTML generado debe contener la ruta del archivo STL para que el visor
+    Three.js pueda cargarlo via fetch('/file=...').
+    Cuando ruta_stl es None (error), devuelve HTML con mensaje de error.
+    """
+    from src.ui.visor import make_viewer_html
+
+    stl_fake = tmp_path / "figura.stl"
+    stl_fake.write_bytes(b"solid test\nendsolid test\n")
+
+    html = make_viewer_html(str(stl_fake))
+
+    assert (
+        str(stl_fake) in html
+    ), f"El HTML debe contener la ruta '{stl_fake}' para que Three.js pueda cargar el STL."
+    assert (
+        "three" in html.lower() or "visor" in html.lower()
+    ), "El HTML debe referenciar Three.js o identificar el visor."
+
+    # Caso error: None
+    html_err = make_viewer_html(None)
+    assert isinstance(html_err, str), "make_viewer_html(None) debe devolver str."
