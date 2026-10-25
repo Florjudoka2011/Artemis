@@ -44,6 +44,29 @@ Si un hook falla legítimamente (ej: `no-commit-to-branch` por política de rama
 usar `SKIP=hook-id` para saltear ÚNICAMENTE ese hook nombrado, nunca `--no-verify`.
 Documentar el motivo en el mensaje del commit.
 
+### 7. Toda afirmación de "verificado" debe incluir el intérprete y la salida real
+
+Cualquier afirmación de la forma "verificado", "confirmado", "funciona", "instalado" debe ir
+acompañada de:
+1. El comando exacto ejecutado
+2. El intérprete usado: `.venv\Scripts\python --version` (salida real, no desde memoria)
+3. La salida real del comando
+
+Ejemplo incorrecto: "CadQuery está instalado y los tests pasan (verificado)."
+Ejemplo correcto: "`.venv\Scripts\python.exe -m pytest -m mvp -v` con
+`.venv\Scripts\python --version` → `Python 3.12.0` → `77 passed in 10.95s` (2026-10-25 19:50)."
+
+### 8. Una historia de usuario no se cierra sin prueba manual de punta a punta
+
+Antes de declarar una historia de usuario como completa, se debe documentar en la evidencia
+una prueba manual de punta a punta que incluya:
+1. Versión del intérprete (`.venv\Scripts\python --version`)
+2. Pasos ejecutados por el usuario real (no por tests automatizados)
+3. Salida observada (capturas de terminal o descripción exacta)
+4. Ruta del archivo de evidencia generado
+
+Sin este registro, la historia **no está cerrada**, aunque todos los tests pasen.
+
 ### 4. No hacer afirmaciones técnicas sin verificación
 
 No afirmar el comportamiento de ninguna librería (Pydantic, CadQuery, skia-python,
