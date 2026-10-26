@@ -138,6 +138,35 @@ def test_prisma_agujero_borde_justo_por_debajo_del_limite_pasa():
 
 
 @pytest.mark.mvp
+@pytest.mark.parametrize(
+    "cara,lado_menor",
+    [
+        ("frontal", 40),  # min(ancho=60, alto=40)
+        ("trasera", 40),
+        ("lateral_izq", 40),  # min(largo=100, alto=40)
+        ("lateral_der", 40),
+    ],
+)
+def test_prisma_agujero_otras_caras(cara, lado_menor):
+    """T-08 | 001/FR-002 — Agujero en caras no-superior produce sólido válido.
+
+    Prueba: src/recipes/prisma_rectangular.py::construir
+
+    Cubre las ramas elif/else de cara frontal/trasera/lateral.
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    params = PrismaRectangularParams(
+        largo=100,
+        ancho=60,
+        alto=40,
+        agujero=AgujeroParams(diametro=lado_menor / 2, cara=CaraAgujero[cara]),
+    )
+    solido = construir(params)
+    assert solido is not None
+
+
+@pytest.mark.mvp
 def test_prisma_agujero_exactamente_en_limite_es_rechazado():
     """T-07 | 001/FR-002 — Agujero con diámetro exactamente igual al lado menor → rechazado.
 
