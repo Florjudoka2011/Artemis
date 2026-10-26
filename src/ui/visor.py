@@ -8,12 +8,14 @@ Reemplaza gr.Model3D (Babylon.js WebGPU) que falla en Brave/Edge con:
 Three.js r0.128.0 (WebGL exclusivo, sin WebGPU). MIT License.
 Archivos locales: src/ui/static/three/
 
-Nota de integración con Gradio:
+Nota de integracion con Gradio:
   Gradio sanitiza gr.HTML y no ejecuta <script> directos
   (https://github.com/gradio-app/gradio/issues/7649).
-  La solución es usar <iframe srcdoc="..."> con
-  <base href="http://127.0.0.1:7860/"> para que los scripts
-  del iframe se ejecuten y /file=... resuelvan al servidor Gradio.
+  La solucion es un <iframe srcdoc="..."> cuyo contenido carga
+  los scripts via URLs absolutas http://127.0.0.1:7860/file=...
+  para evitar la dependencia en resolucion de paths relativos
+  dentro del srcdoc. Ver ADR-003 para la justificacion de
+  allow-same-origin.
 """
 
 from __future__ import annotations
@@ -22,6 +24,12 @@ import html
 from pathlib import Path
 
 _STATIC_DIR = Path(__file__).parent / "static" / "three"
+
+# URL base del servidor Gradio — fija por requisito de seguridad (T-173).
+# La app solo escucha en 127.0.0.1:7860 (ver iniciar()).
+# En Gradio 6.x el endpoint de archivos es /gradio_api/file= (API_PREFIX=/gradio_api).
+_GRADIO_BASE_URL = "http://127.0.0.1:7860"
+_FILE_ROUTE = "/gradio_api/file="
 
 _EMPTY_HTML = (
     '<div id="visor-3d-empty" style="'
@@ -32,40 +40,42 @@ _EMPTY_HTML = (
     "</div>"
 )
 
-_GRADIO_BASE = "http://127.0.0.1:7860/"
 
-
-def _file_url(path: Path) -> str:
-    """Convierte ruta local a URL /file= de Gradio (slash forward)."""
-    return "/file=" + str(path).replace("\\", "/")
+def _abs_file_url(path: Path) -> str:
+    """URL absoluta http://127.0.0.1:7860/gradio_api/file=<ruta> para Gradio 6.x."""
+    return _GRADIO_BASE_URL + _FILE_ROUTE + str(path).replace("\\", "/")
 
 
 def make_viewer_html(ruta_stl: str | None) -> str:
     """Devuelve HTML con el visor Three.js dentro de un iframe srcdoc.
 
-    Gradio sanitiza gr.HTML y no ejecuta <script> directos. La solución
-    es un <iframe srcdoc="..."> que corre su propio contexto JS. El
-    <base href> hace que /file=... resuelva al servidor Gradio.
+    Gradio sanitiza gr.HTML y no ejecuta <script> directos. La solucion
+    es un <iframe srcdoc="..."> que corre su propio contexto JS.
+
+    Los scripts Three.js se cargan con URLs absolutas
+    http://127.0.0.1:7860/file=... para evitar la dependencia en
+    resolucion de base href dentro del srcdoc. Ver ADR-003.
 
     ruta_stl es la ruta absoluta al archivo .stl generado. Gradio lo sirve
-    via '/file=<ruta>' cuando la ruta está en allowed_paths.
+    via '/file=<ruta>' cuando la ruta esta en allowed_paths.
     Si ruta_stl es None, devuelve HTML con mensaje de espera.
     """
     if ruta_stl is None:
         return _EMPTY_HTML
 
-    stl_url = "/file=" + ruta_stl.replace("\\", "/")
-    three_url = _file_url(_STATIC_DIR / "three.min.js")
-    stl_loader_url = _file_url(_STATIC_DIR / "STLLoader.js")
-    orbit_url = _file_url(_STATIC_DIR / "OrbitControls.js")
+    stl_url = _GRADIO_BASE_URL + _FILE_ROUTE + ruta_stl.replace("\\", "/")
+    three_url = _abs_file_url(_STATIC_DIR / "three.min.js")
+    stl_loader_url = _abs_file_url(_STATIC_DIR / "STLLoader.js")
+    orbit_url = _abs_file_url(_STATIC_DIR / "OrbitControls.js")
 
     # HTML completo del visor — va dentro del srcdoc del iframe.
-    # El <base href> hace que /file=... resuelva al servidor Gradio.
+    # Scripts con URLs absolutas: no requiere <base href>.
+    # allow-same-origin: necesario para que el STLLoader pueda hacer
+    # XHR a http://127.0.0.1:7860 desde el iframe (ver ADR-003 S.4).
     inner_html = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<base href="{_GRADIO_BASE}">
 <style>
   body {{ margin:0; padding:0; background:#0d0d1a; overflow:hidden; }}
   canvas {{ display:block; width:100%; height:100%; }}
@@ -145,7 +155,7 @@ def make_viewer_html(ruta_stl: str | None) -> str:
 </body>
 </html>"""
 
-    # html.escape convierte " en &quot; para que el atributo srcdoc sea válido
+    # html.escape convierte " en &quot; para que el atributo srcdoc sea valido HTML
     srcdoc_attr = html.escape(inner_html, quote=True)
 
     return (
