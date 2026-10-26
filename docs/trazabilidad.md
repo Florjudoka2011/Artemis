@@ -39,6 +39,10 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-182 | 001/FR-013 | tests/e2e/test_formulario.py | `test_visor_3d_recibe_ruta_stl_valida` |
 | T-183 | 001/FR-013 | tests/e2e/test_formulario.py | `test_formulario_tiene_visor_3d` |
 | T-184 | 001/FR-001 | tests/e2e/test_formulario.py | `test_actualizar_campos_visibilidad_por_figura` |
+| T-185 | 001/FR-013 | tests/e2e/test_formulario.py | `test_iniciar_autoriza_workspace_en_allowed_paths` |
+| T-186 | 001/FR-013 | tests/e2e/test_formulario.py | `test_interfaz_usa_visor_html_threejs` |
+| T-187 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_contiene_ruta_stl` |
+| T-188 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_usa_iframe_srcdoc` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -49,5 +53,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 44
+**Total tests trazados**: 48
 **Feature IDs cubiertos**: 10

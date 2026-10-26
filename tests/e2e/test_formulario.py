@@ -513,3 +513,46 @@ def test_make_viewer_html_contiene_ruta_stl(tmp_path):
     # Caso error: None
     html_err = make_viewer_html(None)
     assert isinstance(html_err, str), "make_viewer_html(None) debe devolver str."
+
+
+@pytest.mark.mvp
+def test_make_viewer_html_usa_iframe_srcdoc(tmp_path):
+    """T-188 | 001/FR-013 — make_viewer_html usa <iframe srcdoc> para ejecutar scripts.
+
+    Prueba: src/ui/visor.py::make_viewer_html
+
+    Gradio sanitiza gr.HTML y no ejecuta <script> directos (comportamiento
+    documentado: https://github.com/gradio-app/gradio/issues/7649).
+    La solucion es un <iframe srcdoc="..."> que corre su propio contexto JS.
+    El srcdoc debe incluir <base href="http://127.0.0.1:7860/"> para que las
+    URLs relativas /file=... resuelvan al servidor Gradio.
+    """
+    from src.ui.visor import make_viewer_html
+
+    stl_fake = tmp_path / "figura.stl"
+    stl_fake.write_bytes(b"solid test\nendsolid test\n")
+
+    html = make_viewer_html(str(stl_fake))
+
+    # Debe usar iframe, no script tags directos en el HTML raiz
+    assert "<iframe" in html, (
+        "make_viewer_html debe devolver un <iframe> para que los scripts se ejecuten. "
+        "Gradio no ejecuta <script> insertados directamente en gr.HTML."
+    )
+    assert "srcdoc" in html, (
+        "El iframe debe usar srcdoc= para embeber el visor. "
+        "El srcdoc contiene el HTML completo con Three.js y el loader del STL."
+    )
+    # No debe haber <script src= en el HTML raiz (solo dentro del srcdoc)
+    import re
+
+    scripts_raiz = re.findall(r"<script\s+src=", html)
+    assert len(scripts_raiz) == 0, (
+        f"No debe haber <script src=> en el HTML raiz (Gradio los ignora). "
+        f"Encontrados: {scripts_raiz}"
+    )
+    # El base href debe apuntar al servidor Gradio para que /file= resuelva
+    assert "127.0.0.1:7860" in html, (
+        "El srcdoc debe incluir <base href='http://127.0.0.1:7860/'> "
+        "para que las rutas /file=... resuelvan al servidor Gradio."
+    )
