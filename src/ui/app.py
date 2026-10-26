@@ -133,14 +133,19 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         vistas_iram: bool,
     ) -> tuple[str, str, str | None, str | None]:
         mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram)
+        import gradio as _gr
+
         if ruta_stl is not None:
             from pathlib import Path
 
             ruta_step_path = Path(ruta_stl).with_suffix(".step")
             ruta_step = str(ruta_step_path) if ruta_step_path.exists() else None
+            btn_stl_update = _gr.update(visible=True, value=ruta_stl)
+            btn_step_update = _gr.update(visible=True, value=ruta_step)
         else:
-            ruta_step = None
-        return mensaje, make_viewer_html(ruta_stl), ruta_stl, ruta_step
+            btn_stl_update = _gr.update(visible=False, value=None)
+            btn_step_update = _gr.update(visible=False, value=None)
+        return mensaje, make_viewer_html(ruta_stl), btn_stl_update, btn_step_update
 
     with gr.Blocks(title="Artemis") as demo:
         gr.Markdown("## Artemis — Generador de modelos 3D")
