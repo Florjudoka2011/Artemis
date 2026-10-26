@@ -81,11 +81,12 @@ def test_prisma_agujero_pasante_volumen():
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero
 
+    # u=50, v=30: centro de la cara superior (100×60). Coordenadas de borde.
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
         alto=40,
-        agujero=AgujeroParams(diametro=20, cara=CaraAgujero.superior),
+        agujero=AgujeroParams(diametro=20, cara=CaraAgujero.superior, u=50.0, v=30.0),
     )
     solido = construir(params)
     volumen = solido.val().Volume()
@@ -127,11 +128,12 @@ def test_prisma_agujero_borde_justo_por_debajo_del_limite_pasa():
 
     lado_menor = 60.0
     diametro_borde = lado_menor - 0.001
+    # Centro de la cara superior (100×60): u=50, v=30. Coordenadas de borde.
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
         alto=40,
-        agujero=AgujeroParams(diametro=diametro_borde, cara=CaraAgujero.superior),
+        agujero=AgujeroParams(diametro=diametro_borde, cara=CaraAgujero.superior, u=50.0, v=30.0),
     )
     solido = construir(params)
     assert solido is not None
@@ -139,20 +141,21 @@ def test_prisma_agujero_borde_justo_por_debajo_del_limite_pasa():
 
 @pytest.mark.mvp
 @pytest.mark.parametrize(
-    "cara,lado_menor",
+    "cara,lado_menor,u_centro,v_centro",
     [
-        ("frontal", 40),  # min(ancho=60, alto=40)
-        ("trasera", 40),
-        ("lateral_izq", 40),  # min(largo=100, alto=40)
-        ("lateral_der", 40),
+        ("frontal", 40, 50, 20),  # face_w=largo=100, face_h=alto=40 → centro (50,20)
+        ("trasera", 40, 50, 20),
+        ("lateral_izq", 40, 30, 20),  # face_w=ancho=60, face_h=alto=40 → centro (30,20)
+        ("lateral_der", 40, 30, 20),
     ],
 )
-def test_prisma_agujero_otras_caras(cara, lado_menor):
+def test_prisma_agujero_otras_caras(cara, lado_menor, u_centro, v_centro):
     """T-08 | 001/FR-002 — Agujero en caras no-superior produce sólido válido.
 
     Prueba: src/recipes/prisma_rectangular.py::construir
 
     Cubre las ramas elif/else de cara frontal/trasera/lateral.
+    u/v en coordenadas de borde (distancia desde borde izq/base).
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero
 
@@ -160,7 +163,9 @@ def test_prisma_agujero_otras_caras(cara, lado_menor):
         largo=100,
         ancho=60,
         alto=40,
-        agujero=AgujeroParams(diametro=lado_menor / 2, cara=CaraAgujero[cara]),
+        agujero=AgujeroParams(
+            diametro=lado_menor / 2, cara=CaraAgujero[cara], u=u_centro, v=v_centro
+        ),
     )
     solido = construir(params)
     assert solido is not None
@@ -200,6 +205,7 @@ def test_prisma_agujero_posicion_fuera_de_cara_es_rechazado():
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
+    # u=91 (= centro 50 + 41). face_w=100, u_max=90. 91 > 90 → fuera.
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
@@ -208,11 +214,11 @@ def test_prisma_agujero_posicion_fuera_de_cara_es_rechazado():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=41.0,
-            v=0.0,
+            u=91.0,
+            v=30.0,
         ),
     )
-    with pytest.raises(ValueError, match="[Ff]uera|[Ee]xcede|[Ll][íi]mite"):
+    with pytest.raises(ValueError, match="[Ff]uera"):
         construir(params)
 
 
@@ -226,6 +232,8 @@ def test_prisma_agujero_volumen_no_depende_de_posicion():
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
+    # u=70 (= centro 50 + 20): agujero a 20mm del centro hacia la derecha.
+    # El volumen del agujero no depende de la posición (misma geometría cilíndrica).
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
@@ -234,8 +242,8 @@ def test_prisma_agujero_volumen_no_depende_de_posicion():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=20.0,
-            v=0.0,
+            u=70.0,
+            v=30.0,
         ),
     )
     solido = construir(params)
@@ -259,6 +267,7 @@ def test_prisma_agujero_centro_no_esta_dentro_del_solido():
 
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
+    # u=50, v=30: centro de cara superior (100×60). Agujero centrado en (x=0, y=0).
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
@@ -267,8 +276,8 @@ def test_prisma_agujero_centro_no_esta_dentro_del_solido():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=0.0,
-            v=0.0,
+            u=50.0,
+            v=30.0,
         ),
     )
     solido = construir(params)
@@ -290,6 +299,8 @@ def test_prisma_punto_junto_al_agujero_esta_dentro_del_solido():
 
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
+    # u=50, v=30: centro de cara superior. Agujero en (x=0, y=0). Radio=10.
+    # Punto a 11mm del eje: está en el material.
     params = PrismaRectangularParams(
         largo=100,
         ancho=60,
@@ -298,8 +309,8 @@ def test_prisma_punto_junto_al_agujero_esta_dentro_del_solido():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=0.0,
-            v=0.0,
+            u=50.0,
+            v=30.0,
         ),
     )
     solido = construir(params)
@@ -315,8 +326,9 @@ def test_prisma_agujero_cerca_de_esquina_dentro_del_limite_es_aceptado():
 
     Prueba: src/recipes/prisma_rectangular.py::construir
 
-    Prisma 100×60×40, superior (half_u=50, half_v=30), Ø20 (r=10), u=35, v=19.
-    |35|+10=45 < 50 ✓  |19|+10=29 < 30 ✓ → debe pasar.
+    Prisma 100×60×40, superior, Ø20 (r=10).
+    Coordenadas de borde: u=85 (→ x=+35 desde centro), v=49 (→ y=+19 desde centro).
+    u∈(10,90): 85 ✓  v∈(10,50): 49 ✓ → debe pasar.
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
@@ -328,8 +340,8 @@ def test_prisma_agujero_cerca_de_esquina_dentro_del_limite_es_aceptado():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=35.0,
-            v=19.0,
+            u=85.0,
+            v=49.0,
         ),
     )
     solido = construir(params)
@@ -342,8 +354,9 @@ def test_prisma_agujero_un_milimetro_fuera_del_limite_es_rechazado():
 
     Prueba: src/recipes/prisma_rectangular.py::construir
 
-    Prisma 100×60×40, superior, Ø20 (r=10), u=35, v=20.
-    |20|+10=30, condición |v|+r < 30 → NO cumple (30 no es < 30) → rechazado.
+    Prisma 100×60×40, superior, Ø20 (r=10).
+    Coordenadas de borde: u=85, v=50 (= face_h - radio = 60 - 10 = 50, en el límite).
+    v=50 >= v_max=50 → rechazado (el borde del agujero toca la arista de la cara).
     """
     from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
 
@@ -355,11 +368,11 @@ def test_prisma_agujero_un_milimetro_fuera_del_limite_es_rechazado():
             diametro=20,
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.pasante,
-            u=35.0,
-            v=20.0,
+            u=85.0,
+            v=50.0,
         ),
     )
-    with pytest.raises(ValueError, match="[Ff]uera|[Ee]xcede|[Ll][íi]mite"):
+    with pytest.raises(ValueError, match="[Ff]uera"):
         construir(params)
 
 
@@ -382,8 +395,8 @@ def test_prisma_agujero_ciego_volumen():
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.ciego,
             profundidad=15.0,
-            u=0.0,
-            v=0.0,
+            u=50.0,
+            v=30.0,
         ),
     )
     solido = construir(params)
@@ -411,8 +424,8 @@ def test_prisma_agujero_ciego_profundidad_mayor_que_espesor_es_rechazado():
             cara=CaraAgujero.superior,
             tipo=TipoAgujero.ciego,
             profundidad=41.0,
-            u=0.0,
-            v=0.0,
+            u=50.0,
+            v=30.0,
         ),
     )
     with pytest.raises(ValueError, match="[Pp]rofundidad|[Ee]spesor"):

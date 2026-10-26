@@ -170,6 +170,7 @@ def test_generar_con_agujero_prisma(workspace_tmp: Path):
     """
     from src.ui.app import generar
 
+    # u=50, v=30: centro de cara superior (100×60). Coordenadas de borde.
     msg, ruta_stl = generar(
         largo="100",
         ancho="60",
@@ -179,6 +180,9 @@ def test_generar_con_agujero_prisma(workspace_tmp: Path):
         vistas_iram=False,
         tiene_agujero=True,
         diametro_agujero="20",
+        cara_agujero="superior",
+        u_agujero="50",
+        v_agujero="30",
     )
     assert ruta_stl is not None, f"generar() con agujero debio producir STL. msg={msg}"
     assert Path(ruta_stl).exists()
@@ -338,8 +342,8 @@ def test_generar_agujero_ciego_via_ui(workspace_tmp: Path):
         tiene_agujero=True,
         diametro_agujero="20",
         cara_agujero="superior",
-        u_agujero="0",
-        v_agujero="0",
+        u_agujero="50",
+        v_agujero="30",
         tipo_agujero="ciego",
         profundidad_agujero="15",
     )
@@ -366,7 +370,7 @@ def test_generar_agujero_desplazado_via_ui(workspace_tmp: Path):
         diametro_agujero="20",
         cara_agujero="superior",
         u_agujero="20",
-        v_agujero="0",
+        v_agujero="30",
         tipo_agujero="pasante",
         profundidad_agujero="",
     )
@@ -380,7 +384,7 @@ def test_generar_agujero_fuera_de_cara_retorna_error(workspace_tmp: Path):
 
     Prueba: src/ui/app.py::generar (agujero rechazado por límites)
 
-    u=41, r=10 → |41|+10=51 > 50 → rechazado.
+    Coordenadas de borde: u=91 > u_max=90 (face_w=100, radio=10) → rechazado.
     """
     from src.ui.app import generar
 
@@ -394,8 +398,8 @@ def test_generar_agujero_fuera_de_cara_retorna_error(workspace_tmp: Path):
         tiene_agujero=True,
         diametro_agujero="20",
         cara_agujero="superior",
-        u_agujero="41",
-        v_agujero="0",
+        u_agujero="91",
+        v_agujero="30",
         tipo_agujero="pasante",
         profundidad_agujero="",
     )

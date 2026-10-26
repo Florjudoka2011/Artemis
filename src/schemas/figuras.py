@@ -38,6 +38,10 @@ class AgujeroParams(BaseModel):
     diametro: float
     cara: CaraAgujero
     tipo: TipoAgujero = TipoAgujero.pasante
+    # u, v en coordenadas de borde (dibujo técnico):
+    #   u = distancia desde el borde izquierdo de la cara (vista desde afuera)
+    #   v = distancia desde la base (Z=0 para caras verticales; borde -Y para horizontales)
+    # Rango válido: (radio, face_dim - radio) — validado en la receta.
     u: float = 0.0
     v: float = 0.0
     profundidad: Optional[float] = None

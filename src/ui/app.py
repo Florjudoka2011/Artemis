@@ -257,9 +257,47 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             )
 
         with gr.Row():
-            u_agujero = gr.Textbox(label="Desplazamiento u (mm)", value="0", visible=False)
-            v_agujero = gr.Textbox(label="Desplazamiento v (mm)", value="0", visible=False)
+            u_agujero = gr.Textbox(
+                label="u — desde borde izquierdo (mm)", value="0", visible=False
+            )
+            v_agujero = gr.Textbox(label="v — desde base (mm)", value="0", visible=False)
             profundidad_agujero = gr.Textbox(label="Profundidad (mm)", value="", visible=False)
+
+        def _info_rango(cara, diam_str, largo_str, ancho_str, alto_str):
+            """Calcula (info_u, info_v) con rango válido para mostrar bajo cada campo."""
+            try:
+                diam = float(diam_str) if diam_str and diam_str.strip() else None
+                largo_v = float(largo_str) if largo_str and largo_str.strip() else None
+                ancho_v = float(ancho_str) if ancho_str and ancho_str.strip() else None
+                alto_v = float(alto_str) if alto_str and alto_str.strip() else None
+                if not diam or diam <= 0:
+                    return "", ""
+                radio = diam / 2
+                dims = {
+                    "superior": (largo_v, ancho_v),
+                    "inferior": (largo_v, ancho_v),
+                    "frontal": (largo_v, alto_v),
+                    "trasera": (largo_v, alto_v),
+                    "lateral_izq": (ancho_v, alto_v),
+                    "lateral_der": (ancho_v, alto_v),
+                }
+                face_w, face_h = dims.get(cara, (None, None))
+                if face_w is None or face_h is None:
+                    return "", ""
+                u_min, u_max = radio, face_w - radio
+                v_min, v_max = radio, face_h - radio
+                if u_min >= u_max or v_min >= v_max:
+                    return "Diámetro excede cara", "Diámetro excede cara"
+                return (
+                    f"Rango válido: {u_min:.1f} – {u_max:.1f} mm",
+                    f"Rango válido: {v_min:.1f} – {v_max:.1f} mm",
+                )
+            except (ValueError, TypeError):
+                return "", ""
+
+        def _actualizar_rango_uv(cara, diam_str, largo_str, ancho_str, alto_str):
+            info_u, info_v = _info_rango(cara, diam_str, largo_str, ancho_str, alto_str)
+            return gr.update(info=info_u), gr.update(info=info_v)
 
         def _actualizar_figura(fig, chk):
             es_prisma = fig == "prisma_rectangular"
@@ -312,6 +350,15 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             inputs=tipo_agujero,
             outputs=profundidad_agujero,
         )
+
+        _rango_inputs = [cara_agujero, diametro_agujero, largo, ancho, alto]
+        _rango_outputs = [u_agujero, v_agujero]
+        for comp in [cara_agujero, diametro_agujero, largo, ancho, alto]:
+            comp.change(
+                fn=_actualizar_rango_uv,
+                inputs=_rango_inputs,
+                outputs=_rango_outputs,
+            )
 
         with gr.Row():
             vistas_iram = gr.Checkbox(
