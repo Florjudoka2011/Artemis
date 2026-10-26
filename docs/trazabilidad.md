@@ -76,7 +76,13 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-206 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_fuera_de_cara_retorna_error` |
 | T-207 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_cargar_proyecto_json_agujero_completo` |
 | T-208 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_ciego_sin_profundidad_retorna_error` |
+| T-209 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_frontal_v_positivo_mueve_hacia_z_positivo` |
 | T-21 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_profundidad_mayor_que_espesor_es_rechazado` |
+| T-210 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_frontal_u_positivo_desplaza_hacia_x_positivo` |
+| T-211 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_trasera_v_positivo_mueve_hacia_z_positivo` |
+| T-212 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_lateral_izq_v_positivo_mueve_hacia_z_positivo` |
+| T-213 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_lateral_der_v_positivo_mueve_hacia_z_positivo` |
+| T-214 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_superior_u_v_colocan_agujero_correctamente` |
 | T-22 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_profundidad_cero_es_rechazado` |
 | T-23 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_volumen` |
 | T-24 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_profundidad_mayor_que_alto_es_rechazado` |
@@ -90,5 +96,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 85
+**Total tests trazados**: 91
 **Feature IDs cubiertos**: 12
