@@ -5,11 +5,15 @@ Servidor local (127.0.0.1). Sin IA activa en el MVP.
 
 from __future__ import annotations
 
+import json
+from datetime import datetime
 from typing import Any
 
 from pydantic import ValidationError
 
 from src.schemas.figuras import CilindroParams, PrismaRectangularParams
+
+ARTEMIS_VERSION = "1.0.0"
 
 
 def generar(
@@ -75,7 +79,35 @@ def generar(
     ruta_stl = exportar_stl(solido, ws / f"{figura}.stl")
     ruta_step = exportar_step(solido, ws / f"{figura}.step")
 
+    # Guardar proyecto.json junto al STL para reproducibilidad (T-193)
+    proyecto_data = {
+        "figura": figura,
+        "parametros": params.model_dump(exclude={"agujero", "vistas_iram"}),
+        "version_artemis": ARTEMIS_VERSION,
+        "fecha": datetime.now().isoformat(),
+    }
+    ruta_json = ws / "proyecto.json"
+    ruta_json.write_text(json.dumps(proyecto_data, indent=2), encoding="utf-8")
+
     return f"Generado: {ruta_stl}, {ruta_step}", str(ruta_stl)
+
+
+def cargar_proyecto_json(ruta_json: str) -> dict:
+    """Carga un proyecto.json y devuelve un dict con los campos del formulario.
+
+    Retorna dict con claves: figura, largo, ancho, alto, diametro.
+    Los valores numéricos se convierten a str para rellenar gr.Textbox.
+    Campos ausentes quedan como str vacío.
+    """
+    data = json.loads(open(ruta_json, encoding="utf-8").read())
+    params = data.get("parametros", {})
+    return {
+        "figura": data.get("figura", "prisma_rectangular"),
+        "largo": str(params["largo"]) if "largo" in params else "",
+        "ancho": str(params["ancho"]) if "ancho" in params else "",
+        "alto": str(params["alto"]) if "alto" in params else "",
+        "diametro": str(params["diametro"]) if "diametro" in params else "",
+    }
 
 
 def crear_interfaz(conector_ia: Any = None) -> Any:
@@ -88,6 +120,10 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
     from src.ui.visor import make_viewer_html
 
+    # Estado interno para rutas de archivos generados
+    _ruta_stl_state: list[str | None] = [None]
+    _ruta_step_state: list[str | None] = [None]
+
     def generar_con_visor(
         largo: str,
         ancho: str,
@@ -95,9 +131,16 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         diametro: str,
         figura: str,
         vistas_iram: bool,
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, str | None, str | None]:
         mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram)
-        return mensaje, make_viewer_html(ruta_stl)
+        if ruta_stl is not None:
+            from pathlib import Path
+
+            ruta_step_path = Path(ruta_stl).with_suffix(".step")
+            ruta_step = str(ruta_step_path) if ruta_step_path.exists() else None
+        else:
+            ruta_step = None
+        return mensaje, make_viewer_html(ruta_stl), ruta_stl, ruta_step
 
     with gr.Blocks(title="Artemis") as demo:
         gr.Markdown("## Artemis — Generador de modelos 3D")
@@ -146,10 +189,37 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             elem_id="visor-3d",
         )
 
+        with gr.Row():
+            btn_stl = gr.DownloadButton(label="Descargar STL", value=None, visible=False)
+            btn_step = gr.DownloadButton(label="Descargar STEP", value=None, visible=False)
+
         btn.click(
             fn=generar_con_visor,
             inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
-            outputs=[salida, visor],
+            outputs=[salida, visor, btn_stl, btn_step],
+        )
+
+        # Sección "Abrir proyecto"
+        gr.Markdown("---\n### Abrir proyecto")
+        archivo_proyecto = gr.File(label="Cargar proyecto.json", file_types=[".json"])
+
+        def abrir_proyecto(archivo):
+            if archivo is None:
+                return gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
+            params = cargar_proyecto_json(archivo.name)
+            es_prisma = params["figura"] == "prisma_rectangular"
+            return (
+                gr.update(value=params["figura"]),
+                gr.update(value=params["largo"], visible=es_prisma),
+                gr.update(value=params["ancho"], visible=es_prisma),
+                gr.update(value=params["alto"]),
+                gr.update(value=params["diametro"], visible=not es_prisma),
+            )
+
+        archivo_proyecto.change(
+            fn=abrir_proyecto,
+            inputs=archivo_proyecto,
+            outputs=[figura, largo, ancho, alto, diametro],
         )
 
     return demo
