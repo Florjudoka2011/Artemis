@@ -432,19 +432,21 @@ def test_iniciar_autoriza_workspace_en_allowed_paths(monkeypatch):
     allowed = llamadas[0].get("allowed_paths")
     assert allowed is not None, (
         "launch() debe recibir allowed_paths. "
-        "Sin esto Gradio no sirve archivos del workspace al visor 3D."
+        "Sin esto Gradio no sirve los STL generados dinamicamente al visor 3D."
     )
     workspace_str = str(_WORKSPACE_BASE)
     assert any(str(p) == workspace_str for p in allowed), (
         f"allowed_paths debe contener '{workspace_str}'. " f"Obtenido: {allowed}"
     )
-    # Desde T-186: también debe incluir el directorio static de Three.js
+    # T-191: src/ui/static se registra con gr.set_static_paths, NO en allowed_paths.
+    # allowed_paths solo debe contener el workspace (archivos dinamicos).
     from pathlib import Path
 
     static_str = str(Path(__file__).parent.parent.parent / "src" / "ui" / "static")
-    assert any(
-        str(p) == static_str for p in allowed
-    ), f"allowed_paths debe contener '{static_str}' (Three.js). Obtenido: {allowed}"
+    assert not any(str(p) == static_str for p in allowed), (
+        f"src/ui/static no debe estar en allowed_paths (T-191): se registra con "
+        f"gr.set_static_paths(). Obtenido allowed_paths: {allowed}"
+    )
 
 
 @pytest.mark.mvp
@@ -560,14 +562,14 @@ def test_make_viewer_html_usa_iframe_srcdoc(tmp_path):
 
 @pytest.mark.mvp
 def test_make_viewer_html_usa_urls_absolutas(tmp_path):
-    """T-190 | 001/FR-013 — make_viewer_html usa URLs absolutas para three.min.js.
+    """T-190 | 001/FR-013 — make_viewer_html usa URLs absolutas con prefijo /gradio_api/file=.
 
     Prueba: src/ui/visor.py::make_viewer_html
 
-    Las URLs relativas (/file=...) dentro del srcdoc solo se resuelven
-    correctamente si el iframe tiene allow-same-origin Y base href configurado.
-    Con URLs absolutas (http://127.0.0.1:7860/file=...) las scripts cargan
-    sin depender del contexto de base href y el comportamiento es predecible.
+    En Gradio 6.x la ruta de archivos estaticos es /gradio_api/file=<ruta>
+    (no /file=<ruta> como en Gradio <4.x). Las URLs absolutas con el prefijo
+    correcto son necesarias para que los scripts Three.js carguen desde el
+    srcdoc del iframe (origin null) sin triggear ERR_BLOCKED_BY_ORB.
     Requiere gr.set_static_paths() en app.py para autorizar los archivos.
     """
     from src.ui.visor import make_viewer_html
@@ -577,11 +579,11 @@ def test_make_viewer_html_usa_urls_absolutas(tmp_path):
 
     html = make_viewer_html(str(stl_fake))
 
-    # Las URLs de Three.js deben ser absolutas (http://127.0.0.1:7860/file=...)
-    assert "http://127.0.0.1:7860/file=" in html, (
-        "make_viewer_html debe usar URLs absolutas http://127.0.0.1:7860/file=... "
-        "para los archivos de Three.js. Las URLs relativas /file=... pueden fallar "
-        "en srcdoc cuando el iframe no resuelve la base correctamente."
+    # Las URLs de Three.js deben usar el prefijo correcto de Gradio 6.x
+    assert "http://127.0.0.1:7860/gradio_api/file=" in html, (
+        "make_viewer_html debe usar URLs absolutas http://127.0.0.1:7860/gradio_api/file=... "
+        "para los archivos de Three.js. En Gradio 6.x el endpoint es /gradio_api/file= "
+        "(no /file= que era la version anterior)."
     )
     # Los tres archivos de Three.js deben estar referenciados
     assert "three.min.js" in html, "El srcdoc debe cargar three.min.js."
@@ -598,7 +600,7 @@ def test_iniciar_llama_set_static_paths():
     gr.set_static_paths() es el mecanismo oficial de Gradio para servir
     archivos estaticos (Three.js, etc.) sin depender de allowed_paths,
     cuya comparacion de rutas falla en Windows por backslashes vs forward-slashes.
-    Los archivos quedan accesibles en http://127.0.0.1:7860/file=<ruta_absoluta>.
+    Los archivos quedan accesibles en http://127.0.0.1:7860/gradio_api/file=<ruta>.
     """
     from unittest.mock import patch, MagicMock
 
