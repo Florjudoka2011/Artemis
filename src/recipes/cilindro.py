@@ -19,4 +19,9 @@ def construir(params: CilindroParams) -> cq.Workplane:
             "Agujero en cilindro: pendiente MVP Phase 4 (US2), tests T-11..T-14"
         )
 
-    return cq.Workplane("XY").cylinder(params.alto, params.diametro / 2)
+    # cylinder() centra en Z por defecto; translate sube la pieza zmin=0 (convención T-198)
+    return (
+        cq.Workplane("XY")
+        .cylinder(params.alto, params.diametro / 2)
+        .translate((0, 0, params.alto / 2))
+    )

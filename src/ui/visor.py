@@ -98,7 +98,7 @@ def make_viewer_html(ruta_stl: str | None) -> str:
     45, window.innerWidth / window.innerHeight, 0.1, 100000
   );
   camera.position.set(200, 200, 200);
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   var controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -114,14 +114,15 @@ def make_viewer_html(ruta_stl: str | None) -> str:
 
   var loader = new THREE.STLLoader();
   loader.load('{stl_url}', function(geometry) {{
+    // CadQuery usa Z-up; Three.js usa Y-up: rotar -90 grados en X.
+    // Con la convencion zmin=0 en recetas, la pieza queda sobre la grilla tras la rotacion.
+    geometry.rotateX(-Math.PI / 2);
+
+    // Recomputar bbox en coordenadas Three.js (post-rotacion) para valores correctos.
     geometry.computeBoundingBox();
     var box = geometry.boundingBox;
     var center = new THREE.Vector3();
     box.getCenter(center);
-
-    // CadQuery usa Z-up; Three.js usa Y-up: rotar -90 grados en X
-    geometry.rotateX(-Math.PI / 2);
-    geometry.translate(-center.x, -box.min.z, center.y);
 
     var mat = new THREE.MeshPhongMaterial({{
       color: 0x4fc3f7, specular: 0x888888, shininess: 60,
@@ -129,12 +130,13 @@ def make_viewer_html(ruta_stl: str | None) -> str:
     }});
     scene.add(new THREE.Mesh(geometry, mat));
 
-    // Encuadrar camara segun bounding box
+    // Encuadrar camara apuntando al centro de la pieza (no al origen).
     var size = new THREE.Vector3();
     box.getSize(size);
-    var d = Math.max(size.x, size.y, size.z) * 1.5;
-    camera.position.set(d, d * 0.8, d);
-    camera.lookAt(0, 0, 0);
+    var d = Math.max(size.x, size.y, size.z) * 1.8;
+    camera.position.set(d, center.y + d * 0.6, d);
+    camera.lookAt(center);
+    controls.target.copy(center);
     controls.update();
   }});
 

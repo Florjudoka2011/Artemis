@@ -19,4 +19,7 @@ def construir(params: PrismaRectangularParams) -> cq.Workplane:
             "Agujero en prisma: pendiente MVP Phase 4 (US2), tests T-04..T-09"
         )
 
-    return cq.Workplane("XY").box(params.largo, params.ancho, params.alto)
+    # centered=(True, True, False): centrado en X e Y, zmin=0 (convención T-197)
+    return cq.Workplane("XY").box(
+        params.largo, params.ancho, params.alto, centered=(True, True, False)
+    )
