@@ -7,10 +7,18 @@ Reemplaza gr.Model3D (Babylon.js WebGPU) que falla en Brave/Edge con:
 
 Three.js r0.128.0 (WebGL exclusivo, sin WebGPU). MIT License.
 Archivos locales: src/ui/static/three/
+
+Nota de integración con Gradio:
+  Gradio sanitiza gr.HTML y no ejecuta <script> directos
+  (https://github.com/gradio-app/gradio/issues/7649).
+  La solución es usar <iframe srcdoc="..."> con
+  <base href="http://127.0.0.1:7860/"> para que los scripts
+  del iframe se ejecuten y /file=... resuelvan al servidor Gradio.
 """
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 _STATIC_DIR = Path(__file__).parent / "static" / "three"
@@ -24,6 +32,8 @@ _EMPTY_HTML = (
     "</div>"
 )
 
+_GRADIO_BASE = "http://127.0.0.1:7860/"
+
 
 def _file_url(path: Path) -> str:
     """Convierte ruta local a URL /file= de Gradio (slash forward)."""
@@ -31,7 +41,11 @@ def _file_url(path: Path) -> str:
 
 
 def make_viewer_html(ruta_stl: str | None) -> str:
-    """Devuelve HTML con el visor Three.js apuntando a ruta_stl.
+    """Devuelve HTML con el visor Three.js dentro de un iframe srcdoc.
+
+    Gradio sanitiza gr.HTML y no ejecuta <script> directos. La solución
+    es un <iframe srcdoc="..."> que corre su propio contexto JS. El
+    <base href> hace que /file=... resuelva al servidor Gradio.
 
     ruta_stl es la ruta absoluta al archivo .stl generado. Gradio lo sirve
     via '/file=<ruta>' cuando la ruta está en allowed_paths.
@@ -45,30 +59,34 @@ def make_viewer_html(ruta_stl: str | None) -> str:
     stl_loader_url = _file_url(_STATIC_DIR / "STLLoader.js")
     orbit_url = _file_url(_STATIC_DIR / "OrbitControls.js")
 
-    wrapper_style = (
-        "width:100%;height:400px;background:#0d0d1a;"
-        "border-radius:8px;overflow:hidden;position:relative;"
-    )
-    return f"""<div id="visor-3d-canvas-wrapper" style="{wrapper_style}">
-  <canvas id="visor-3d-canvas" style="width:100%;height:100%;display:block;"></canvas>
-</div>
+    # HTML completo del visor — va dentro del srcdoc del iframe.
+    # El <base href> hace que /file=... resuelva al servidor Gradio.
+    inner_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<base href="{_GRADIO_BASE}">
+<style>
+  body {{ margin:0; padding:0; background:#0d0d1a; overflow:hidden; }}
+  canvas {{ display:block; width:100%; height:100%; }}
+</style>
+</head>
+<body>
 <script src="{three_url}"></script>
 <script src="{stl_loader_url}"></script>
 <script src="{orbit_url}"></script>
 <script>
 (function() {{
-  var canvas = document.getElementById('visor-3d-canvas');
-  if (!canvas || typeof THREE === 'undefined') return;
-
-  var renderer = new THREE.WebGLRenderer({{ canvas: canvas, antialias: true }});
+  var renderer = new THREE.WebGLRenderer({{ antialias: true }});
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(canvas.clientWidth || 600, canvas.clientHeight || 400);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x0d0d1a);
+  document.body.appendChild(renderer.domElement);
 
   var scene = new THREE.Scene();
-  var w = canvas.clientWidth || 600;
-  var h = canvas.clientHeight || 400;
-  var camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
+  var camera = new THREE.PerspectiveCamera(
+    45, window.innerWidth / window.innerHeight, 0.1, 100000
+  );
   camera.position.set(200, 200, 200);
   camera.lookAt(0, 0, 0);
 
@@ -81,7 +99,6 @@ def make_viewer_html(ruta_stl: str | None) -> str:
   dir.position.set(300, 400, 300);
   scene.add(dir);
 
-  // Grilla y ejes estilo Cura
   scene.add(new THREE.GridHelper(300, 30, 0x333366, 0x222244));
   scene.add(new THREE.AxesHelper(50));
 
@@ -94,21 +111,27 @@ def make_viewer_html(ruta_stl: str | None) -> str:
 
     // CadQuery usa Z-up; Three.js usa Y-up: rotar -90 grados en X
     geometry.rotateX(-Math.PI / 2);
-    // Centrar el objeto sobre la grilla
     geometry.translate(-center.x, -box.min.z, center.y);
 
     var mat = new THREE.MeshPhongMaterial({{
-      color: 0x4fc3f7, specular: 0x888888, shininess: 60, side: THREE.DoubleSide
+      color: 0x4fc3f7, specular: 0x888888, shininess: 60,
+      side: THREE.DoubleSide
     }});
     scene.add(new THREE.Mesh(geometry, mat));
 
-    // Ajustar camara al bounding box del objeto
+    // Encuadrar camara segun bounding box
     var size = new THREE.Vector3();
     box.getSize(size);
     var d = Math.max(size.x, size.y, size.z) * 1.5;
     camera.position.set(d, d * 0.8, d);
     camera.lookAt(0, 0, 0);
     controls.update();
+  }});
+
+  window.addEventListener('resize', function() {{
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
   }});
 
   function animate() {{
@@ -118,4 +141,16 @@ def make_viewer_html(ruta_stl: str | None) -> str:
   }}
   animate();
 }})();
-</script>"""
+</script>
+</body>
+</html>"""
+
+    # html.escape convierte " en &quot; para que el atributo srcdoc sea válido
+    srcdoc_attr = html.escape(inner_html, quote=True)
+
+    return (
+        f'<iframe srcdoc="{srcdoc_attr}" '
+        'style="width:100%;height:400px;border:none;border-radius:8px;" '
+        'sandbox="allow-scripts allow-same-origin">'
+        "</iframe>"
+    )
