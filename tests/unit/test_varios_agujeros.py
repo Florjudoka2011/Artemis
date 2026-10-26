@@ -10,6 +10,10 @@ T-205 | Validación: dos agujeros caras distintas que se cruzan — aceptado
 T-206 | Volumen: prisma 100×60×40 con dos agujeros pasantes Ø20 cara superior
 T-207 | isInside: cruce de ejes entre caras distintas NO está dentro del sólido
 T-208 | UI: crear_interfaz() incluye tabla de agujeros con botones agregar/quitar
+T-209 | tabla_a_operaciones convierte lista de filas a lista de dicts
+T-210 | agregar/quitar fila en tabla de agujeros
+T-211 | Compatibilidad: formato viejo con cara frontal se convierte correctamente
+T-212 | generar() acepta operaciones y produce STL con agujero
 """
 
 import json
@@ -22,7 +26,13 @@ from src.schemas.figuras import (
     PrismaRectangularParams,
 )
 from src.recipes.prisma_rectangular import construir
-from src.ui.app import cargar_proyecto_json
+from src.ui.app import (
+    _agregar_fila_tabla,
+    _quitar_ultima_fila_tabla,
+    cargar_proyecto_json,
+    generar,
+    tabla_a_operaciones,
+)
 
 
 # ── T-200: lista vacía por defecto ───────────────────────────────────────────
@@ -344,3 +354,154 @@ def test_t208_interfaz_tiene_tabla_agujeros():
     quitar = any("uitar" in lbl for lbl in button_labels)
     assert agregar, f"Debe haber botón con 'Agregar'. Botones encontrados: {button_labels}"
     assert quitar, f"Debe haber botón con 'Quitar'. Botones encontrados: {button_labels}"
+
+
+# ── T-209: tabla_a_operaciones ────────────────────────────────────────────────
+
+
+@pytest.mark.mvp
+def test_t209_tabla_a_operaciones_convierte_filas():
+    """T-209 | 001/FR-020 — tabla_a_operaciones convierte filas de Dataframe a dicts.
+
+    Prueba: src/ui/app.py::tabla_a_operaciones
+    """
+    filas = [
+        ["superior", 20.0, 25.0, 30.0, "pasante", 0.0],
+        ["frontal", 10.0, 50.0, 20.0, "ciego", 15.0],
+    ]
+    ops = tabla_a_operaciones(filas)
+    assert len(ops) == 2
+    assert ops[0]["cara"] == "superior"
+    assert ops[0]["diametro"] == 20.0
+    assert ops[0]["u"] == 25.0
+    assert ops[0]["v"] == 30.0
+    assert ops[0]["subtipo"] == "pasante"
+    assert ops[1]["cara"] == "frontal"
+    assert ops[1]["subtipo"] == "ciego"
+    assert ops[1]["profundidad"] == 15.0
+
+
+@pytest.mark.mvp
+def test_t209b_tabla_a_operaciones_none_devuelve_vacio():
+    """T-209b | tabla_a_operaciones con None devuelve lista vacía."""
+    assert tabla_a_operaciones(None) == []
+
+
+# ── T-210: agregar y quitar filas ─────────────────────────────────────────────
+
+
+@pytest.mark.mvp
+def test_t210_agregar_y_quitar_fila():
+    """T-210 | 001/FR-020 — _agregar_fila_tabla y _quitar_ultima_fila_tabla funcionan.
+
+    Prueba: src/ui/app.py::_agregar_fila_tabla, _quitar_ultima_fila_tabla
+    """
+    defaults = ["superior", 10.0, 0.0, 0.0, "pasante", 0.0]
+    df_inicial = []
+
+    df1 = _agregar_fila_tabla(df_inicial, defaults)
+    assert len(df1) == 1
+    assert df1[0] == defaults
+
+    df2 = _agregar_fila_tabla(df1, defaults)
+    assert len(df2) == 2
+
+    df3 = _quitar_ultima_fila_tabla(df2)
+    assert len(df3) == 1
+
+    df4 = _quitar_ultima_fila_tabla([])
+    assert df4 == []
+
+
+# ── T-211: compatibilidad formato viejo cara frontal ─────────────────────────
+
+
+@pytest.mark.mvp
+def test_t211_compatibilidad_cara_frontal(tmp_path):
+    """T-211 | 001/FR-020 — cargar_proyecto_json convierte agujero viejo en cara frontal.
+
+    Prueba: src/ui/app.py::cargar_proyecto_json
+    """
+    viejo = {
+        "figura": "prisma_rectangular",
+        "parametros": {
+            "largo": 100.0,
+            "ancho": 60.0,
+            "alto": 40.0,
+            "agujero": {
+                "diametro": 10.0,
+                "cara": "frontal",
+                "offset_x": 0.0,
+                "offset_y": 0.0,
+            },
+        },
+        "version_artemis": "1.0.0",
+        "fecha": "2026-10-25T00:00:00",
+    }
+    ruta = tmp_path / "p.json"
+    ruta.write_text(json.dumps(viejo), encoding="utf-8")
+    result = cargar_proyecto_json(str(ruta))
+
+    assert len(result["operaciones"]) == 1
+    op = result["operaciones"][0]
+    assert op["cara"] == "frontal"
+    # v = alto/2 + offset_y = 20 + 0 = 20
+    assert op["v"] == 20.0
+
+
+@pytest.mark.mvp
+def test_t211b_compatibilidad_cara_lateral(tmp_path):
+    """T-211b | cargar_proyecto_json convierte agujero viejo en cara lateral."""
+    viejo = {
+        "figura": "prisma_rectangular",
+        "parametros": {
+            "largo": 100.0,
+            "ancho": 60.0,
+            "alto": 40.0,
+            "agujero": {
+                "diametro": 10.0,
+                "cara": "lateral_izq",
+                "offset_x": 5.0,
+                "offset_y": 0.0,
+            },
+        },
+        "version_artemis": "1.0.0",
+        "fecha": "2026-10-25T00:00:00",
+    }
+    ruta = tmp_path / "p.json"
+    ruta.write_text(json.dumps(viejo), encoding="utf-8")
+    result = cargar_proyecto_json(str(ruta))
+
+    assert result["operaciones"][0]["cara"] == "lateral_izq"
+    # u = ancho/2 + offset_x = 30 + 5 = 35
+    assert result["operaciones"][0]["u"] == 35.0
+
+
+# ── T-212: generar() con operaciones produce STL ─────────────────────────────
+
+
+@pytest.mark.mvp
+def test_t212_generar_con_operaciones(workspace_tmp):
+    """T-212 | 001/FR-020 — generar() con operaciones válidas produce STL sin error.
+
+    Prueba: src/ui/app.py::generar
+    """
+    msg, ruta_stl = generar(
+        largo="100",
+        ancho="60",
+        alto="40",
+        figura="prisma_rectangular",
+        vistas_iram=False,
+        operaciones=[
+            {
+                "tipo": "agujero",
+                "cara": "superior",
+                "diametro": 20.0,
+                "u": 50.0,
+                "v": 30.0,
+                "subtipo": "pasante",
+                "profundidad": 0.0,
+            }
+        ],
+    )
+    assert ruta_stl is not None, f"generar() con operación debe producir STL. msg={msg}"

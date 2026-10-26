@@ -169,6 +169,48 @@ def cargar_proyecto_json(ruta_json: str) -> dict:
     }
 
 
+def tabla_a_operaciones(tabla) -> list[dict]:
+    """Convierte el valor de gr.Dataframe a lista de dicts de operaciones.
+
+    Cada fila del Dataframe tiene columnas: cara, diámetro, u, v, tipo, profundidad.
+    Filas con datos inválidos (tipos incorrectos) se omiten silenciosamente.
+    """
+    if tabla is None:
+        return []
+    rows = tabla if isinstance(tabla, list) else tabla.values.tolist()
+    ops = []
+    for row in rows:
+        if not row or len(row) < 6:
+            continue
+        try:
+            ops.append(
+                {
+                    "tipo": "agujero",
+                    "cara": str(row[0]) if row[0] else "superior",
+                    "diametro": float(row[1]) if row[1] is not None else 10.0,
+                    "u": float(row[2]) if row[2] is not None else 0.0,
+                    "v": float(row[3]) if row[3] is not None else 0.0,
+                    "subtipo": str(row[4]) if row[4] else "pasante",
+                    "profundidad": float(row[5]) if row[5] is not None else 0.0,
+                }
+            )
+        except (TypeError, ValueError):
+            continue
+    return ops
+
+
+def _agregar_fila_tabla(df, defaults: list) -> list:
+    """Agrega una fila con valores por defecto al final del Dataframe de operaciones."""
+    rows = df if isinstance(df, list) else df.values.tolist()
+    return rows + [list(defaults)]
+
+
+def _quitar_ultima_fila_tabla(df) -> list:
+    """Elimina la última fila del Dataframe de operaciones."""
+    rows = df if isinstance(df, list) else df.values.tolist()
+    return rows[:-1] if rows else []
+
+
 def crear_interfaz(conector_ia: Any = None) -> Any:
     """Crea la interfaz Gradio.
 
@@ -179,31 +221,6 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
     from src.ui.visor import make_viewer_html
 
-    def _tabla_a_operaciones(tabla) -> list[dict]:
-        """Convierte el valor de gr.Dataframe a lista de dicts de operaciones."""
-        if tabla is None:
-            return []
-        rows = tabla if isinstance(tabla, list) else tabla.values.tolist()
-        ops = []
-        for row in rows:
-            if not row or len(row) < 6:
-                continue
-            try:
-                ops.append(
-                    {
-                        "tipo": "agujero",
-                        "cara": str(row[0]) if row[0] else "superior",
-                        "diametro": float(row[1]) if row[1] is not None else 10.0,
-                        "u": float(row[2]) if row[2] is not None else 0.0,
-                        "v": float(row[3]) if row[3] is not None else 0.0,
-                        "subtipo": str(row[4]) if row[4] else "pasante",
-                        "profundidad": float(row[5]) if row[5] is not None else 0.0,
-                    }
-                )
-            except (TypeError, ValueError):
-                continue
-        return ops
-
     def generar_con_visor(
         largo: str,
         ancho: str,
@@ -213,7 +230,7 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         vistas_iram: bool,
         tabla_agujeros,
     ) -> tuple[str, str, Any, Any, Any]:
-        ops = _tabla_a_operaciones(tabla_agujeros)
+        ops = tabla_a_operaciones(tabla_agujeros)
         mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram, ops)
 
         if ruta_stl is not None:
@@ -292,21 +309,13 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
             btn_agregar = gr.Button("Agregar fila")
             btn_quitar = gr.Button("Quitar última")
 
-        def _agregar_fila(df):
-            rows = df if isinstance(df, list) else df.values.tolist()
-            return rows + [list(_TABLA_DEFAULTS)]
-
-        def _quitar_ultima(df):
-            rows = df if isinstance(df, list) else df.values.tolist()
-            return rows[:-1] if rows else []
-
         btn_agregar.click(
-            fn=_agregar_fila,
+            fn=lambda df: _agregar_fila_tabla(df, _TABLA_DEFAULTS),
             inputs=tabla_agujeros,
             outputs=tabla_agujeros,
         )
         btn_quitar.click(
-            fn=_quitar_ultima,
+            fn=_quitar_ultima_fila_tabla,
             inputs=tabla_agujeros,
             outputs=tabla_agujeros,
         )

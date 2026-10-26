@@ -60,6 +60,10 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-206 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t206_volumen_dos_agujeros_pasantes` |
 | T-207 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t207_cruce_ejes_no_dentro_del_solido` |
 | T-208 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t208_interfaz_tiene_tabla_agujeros` |
+| T-209 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t209_tabla_a_operaciones_convierte_filas` |
+| T-210 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t210_agregar_y_quitar_fila` |
+| T-211 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t211_compatibilidad_cara_frontal` |
+| T-212 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t212_generar_con_operaciones` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -70,5 +74,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 65
+**Total tests trazados**: 69
 **Feature IDs cubiertos**: 12
