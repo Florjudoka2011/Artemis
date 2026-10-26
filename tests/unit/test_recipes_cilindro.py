@@ -50,3 +50,82 @@ def test_cilindro_zmin_es_cero():
     radio = 25.0
     assert math.isclose(bb.xmin, -radio, abs_tol=1e-4), "Debe estar centrado en X"
     assert math.isclose(bb.ymin, -radio, abs_tol=1e-4), "Debe estar centrado en Y"
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_coaxial_volumen():
+    """T-11 | 001/FR-002 — Cilindro Ø50×80 con agujero coaxial Ø20 → volumen correcto.
+
+    Prueba: src/recipes/cilindro.py::construir
+
+    Valor esperado: π × (25² − 10²) × 80 = 131946.891 mm³
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(diametro=20, cara=CaraAgujero.superior),
+    )
+    solido = construir(params)
+    volumen = solido.val().Volume()
+    esperado = math.pi * (25**2 - 10**2) * 80
+    assert math.isclose(
+        volumen, esperado, rel_tol=1e-6
+    ), f"Volumen esperado {esperado:.3f} mm³, obtenido {volumen}"
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_diametro_mayor_o_igual_diametro_cilindro_es_rechazado():
+    """T-12 | 001/FR-002 — Agujero con diámetro ≥ diámetro del cilindro (50) → rechazado.
+
+    Prueba: src/recipes/cilindro.py::construir
+
+    Regla geométrica: diámetro del agujero debe ser < diámetro del cilindro.
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(diametro=50, cara=CaraAgujero.superior),
+    )
+    with pytest.raises(ValueError, match="[Dd]i[aá]metro"):
+        construir(params)
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_borde_justo_por_debajo_del_limite_pasa():
+    """T-13 | 001/FR-002 — Agujero con diámetro justo por debajo del límite pasa.
+
+    Prueba: src/recipes/cilindro.py::construir
+
+    Borde: diámetro = diámetro_cilindro − ε (debe pasar).
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    diametro_borde = 50.0 - 0.001
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(diametro=diametro_borde, cara=CaraAgujero.superior),
+    )
+    solido = construir(params)
+    assert solido is not None
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_exactamente_en_limite_es_rechazado():
+    """T-14 | 001/FR-002 — Agujero con diámetro exactamente igual al del cilindro → rechazado.
+
+    Prueba: src/recipes/cilindro.py::construir
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(diametro=50.0, cara=CaraAgujero.superior),
+    )
+    with pytest.raises(ValueError, match="[Dd]i[aá]metro"):
+        construir(params)
