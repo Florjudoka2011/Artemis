@@ -1,0 +1,30 @@
+........................................................................ [ 56%]
+........................................................                 [100%]
+============================== warnings summary ===============================
+tests\e2e\test_visor_playwright.py:38
+  D:\Proyecto\tests\e2e\test_visor_playwright.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.visor - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.visor
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.0-final-0 _______________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+src\__init__.py                         0      0   100%
+src\export\__init__.py                  0      0   100%
+src\export\solid.py                    12      0   100%
+src\recipes\__init__.py                 0      0   100%
+src\recipes\cilindro.py                16      0   100%
+src\recipes\prisma_rectangular.py      28      0   100%
+src\schemas\__init__.py                 0      0   100%
+src\schemas\figuras.py                 78      1    99%   59
+src\ui\__init__.py                      0      0   100%
+src\ui\app.py                         145     25    83%   187-215, 290-291, 314, 373-380, 461
+src\ui\visor.py                        19      0   100%
+src\ui\workspace.py                     9      0   100%
+src\views_iram\__init__.py              0      0   100%
+-----------------------------------------------------------------
+TOTAL                                 307     26    92%
+Required test coverage of 90% reached. Total coverage: 91.53%
+128 passed, 1 deselected, 1 warning in 18.73s

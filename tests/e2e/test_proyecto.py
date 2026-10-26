@@ -313,3 +313,158 @@ def test_round_trip_proyecto_mismo_hash(workspace_tmp: Path):
         f"Hash regenerado: {hash2}\n"
         f"Params usados: {params}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Tests US2-Ampliación: nuevos parámetros de agujero en app.py
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.mvp
+def test_generar_agujero_ciego_via_ui(workspace_tmp: Path):
+    """T-204 | 001/FR-002 — generar() prisma con agujero ciego via UI → STL válido.
+
+    Prueba: src/ui/app.py::generar (agujero ciego con profundidad)
+    """
+    from src.ui.app import generar
+
+    msg, ruta_stl = generar(
+        largo="100",
+        ancho="60",
+        alto="40",
+        diametro="",
+        figura="prisma_rectangular",
+        vistas_iram=False,
+        tiene_agujero=True,
+        diametro_agujero="20",
+        cara_agujero="superior",
+        u_agujero="0",
+        v_agujero="0",
+        tipo_agujero="ciego",
+        profundidad_agujero="15",
+    )
+    assert ruta_stl is not None, f"generar() ciego debio producir STL. msg={msg}"
+    assert Path(ruta_stl).exists()
+
+
+@pytest.mark.mvp
+def test_generar_agujero_desplazado_via_ui(workspace_tmp: Path):
+    """T-205 | 001/FR-002 — generar() prisma con agujero desplazado u=20 → STL válido.
+
+    Prueba: src/ui/app.py::generar (agujero pasante con u/v offset)
+    """
+    from src.ui.app import generar
+
+    msg, ruta_stl = generar(
+        largo="100",
+        ancho="60",
+        alto="40",
+        diametro="",
+        figura="prisma_rectangular",
+        vistas_iram=False,
+        tiene_agujero=True,
+        diametro_agujero="20",
+        cara_agujero="superior",
+        u_agujero="20",
+        v_agujero="0",
+        tipo_agujero="pasante",
+        profundidad_agujero="",
+    )
+    assert ruta_stl is not None, f"generar() desplazado debio producir STL. msg={msg}"
+    assert Path(ruta_stl).exists()
+
+
+@pytest.mark.mvp
+def test_generar_agujero_fuera_de_cara_retorna_error(workspace_tmp: Path):
+    """T-206 | 001/FR-002 — generar() prisma agujero fuera de cara → error geométrico.
+
+    Prueba: src/ui/app.py::generar (agujero rechazado por límites)
+
+    u=41, r=10 → |41|+10=51 > 50 → rechazado.
+    """
+    from src.ui.app import generar
+
+    msg, ruta_stl = generar(
+        largo="100",
+        ancho="60",
+        alto="40",
+        diametro="",
+        figura="prisma_rectangular",
+        vistas_iram=False,
+        tiene_agujero=True,
+        diametro_agujero="20",
+        cara_agujero="superior",
+        u_agujero="41",
+        v_agujero="0",
+        tipo_agujero="pasante",
+        profundidad_agujero="",
+    )
+    assert ruta_stl is None, "Agujero fuera de cara debe retornar ruta_stl=None"
+    assert "geométrico" in msg or "fuera" in msg.lower() or "excede" in msg.lower()
+
+
+@pytest.mark.mvp
+def test_cargar_proyecto_json_agujero_completo(tmp_path):
+    """T-207 | 001/FR-002 — cargar_proyecto_json() recupera todos los campos del agujero.
+
+    Prueba: src/ui/app.py::cargar_proyecto_json (campos tipo, u, v, profundidad)
+    """
+    from src.ui.app import cargar_proyecto_json
+
+    proyecto = {
+        "figura": "prisma_rectangular",
+        "parametros": {
+            "largo": 100.0,
+            "ancho": 60.0,
+            "alto": 40.0,
+            "agujero": {
+                "diametro": 20.0,
+                "cara": "superior",
+                "tipo": "ciego",
+                "u": 10.0,
+                "v": 5.0,
+                "profundidad": 15.0,
+            },
+        },
+        "version_artemis": "1.0.0",
+        "fecha": "2026-10-26T00:00:00",
+    }
+    ruta = tmp_path / "proyecto.json"
+    ruta.write_text(json.dumps(proyecto), encoding="utf-8")
+
+    result = cargar_proyecto_json(str(ruta))
+
+    assert result["tiene_agujero"] is True
+    assert result["diametro_agujero"] == "20.0"
+    assert result["cara_agujero"] == "superior"
+    assert result["tipo_agujero"] == "ciego"
+    assert result["u_agujero"] == "10.0"
+    assert result["v_agujero"] == "5.0"
+    assert result["profundidad_agujero"] == "15.0"
+
+
+@pytest.mark.mvp
+def test_generar_agujero_ciego_sin_profundidad_retorna_error():
+    """T-208 | 001/FR-002 — generar() ciego sin profundidad → error de validación.
+
+    Prueba: src/ui/app.py::generar (ciego requiere profundidad)
+    """
+    from src.ui.app import generar
+
+    msg, ruta_stl = generar(
+        largo="100",
+        ancho="60",
+        alto="40",
+        diametro="",
+        figura="prisma_rectangular",
+        vistas_iram=False,
+        tiene_agujero=True,
+        diametro_agujero="20",
+        cara_agujero="superior",
+        u_agujero="0",
+        v_agujero="0",
+        tipo_agujero="ciego",
+        profundidad_agujero="",
+    )
+    assert ruta_stl is None
+    assert "validación" in msg.lower() or "profundidad" in msg.lower()

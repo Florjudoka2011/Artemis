@@ -12,6 +12,7 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-06 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_borde_justo_por_debajo_del_limite_pasa` |
 | T-07 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_exactamente_en_limite_es_rechazado` |
 | T-08 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_otras_caras` |
+| T-09 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_posicion_fuera_de_cara_es_rechazado` |
 | T-10 | 001/FR-004 | tests/unit/test_recipes_cilindro.py | `test_cilindro_nominal` |
 | T-100a | 001/FR-005 | tests/unit/test_schemas.py | `test_prisma_valido_completo` |
 | T-100b | 001/FR-005 | tests/unit/test_schemas.py | `test_cilindro_valido_completo` |
@@ -30,6 +31,7 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-12 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_diametro_mayor_o_igual_diametro_cilindro_es_rechazado` |
 | T-13 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_borde_justo_por_debajo_del_limite_pasa` |
 | T-14 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_exactamente_en_limite_es_rechazado` |
+| T-15 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_volumen_no_depende_de_posicion` |
 | T-150 | 001/FR-009 | tests/e2e/test_formulario.py | `test_stl_deterministico` |
 | T-151 | 001/FR-001 | tests/e2e/test_formulario.py | `test_formulario_campo_vacio` |
 | T-152 | 001/FR-009 | tests/e2e/test_formulario.py | `test_formulario_sin_ia` |
@@ -39,10 +41,13 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-156 | 001/FR-003 | tests/e2e/test_formulario.py | `test_formulario_tiene_checkbox_vistas_iram` |
 | T-158 | 001/FR-003 | tests/e2e/test_formulario.py | `test_generar_acepta_vistas_iram` |
 | T-159 | 001/FR-005 | tests/e2e/test_formulario.py | `test_generar_prisma_parametro_invalido_retorna_error` |
+| T-16 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_centro_no_esta_dentro_del_solido` |
 | T-160 | 001/FR-001 | tests/e2e/test_formulario.py | `test_formulario_cilindro_campo_vacio` |
 | T-161 | 001/FR-005 | tests/e2e/test_formulario.py | `test_generar_cilindro_parametro_invalido_retorna_error` |
 | T-162 | 001/FR-001 | tests/e2e/test_formulario.py | `test_generar_figura_desconocida_retorna_error` |
+| T-17 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_punto_junto_al_agujero_esta_dentro_del_solido` |
 | T-173 | 001/FR-010 | tests/e2e/test_formulario.py | `test_iniciar_usa_host_y_puerto_seguros` |
+| T-18 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_cerca_de_esquina_dentro_del_limite_es_aceptado` |
 | T-180 | 001/FR-010 | tests/e2e/test_formulario.py | `test_generar_usa_workspace_configurado` |
 | T-181 | 001/FR-001 | tests/e2e/test_formulario.py | `test_formulario_campos_dinamicos_por_figura` |
 | T-182 | 001/FR-013 | tests/e2e/test_formulario.py | `test_visor_3d_recibe_ruta_stl_valida` |
@@ -52,6 +57,7 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-186 | 001/FR-013 | tests/e2e/test_formulario.py | `test_interfaz_usa_visor_html_threejs` |
 | T-187 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_contiene_ruta_stl` |
 | T-188 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_usa_iframe_srcdoc` |
+| T-19 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_un_milimetro_fuera_del_limite_es_rechazado` |
 | T-190 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_usa_urls_absolutas` |
 | T-191 | 001/FR-013 | tests/e2e/test_formulario.py | `test_iniciar_llama_set_static_paths` |
 | T-193 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_generar_guarda_proyecto_json` |
@@ -60,10 +66,20 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-196 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_round_trip_proyecto_mismo_hash` |
 | T-197 | 001/FR-004 | tests/unit/test_recipes_prisma.py | `test_prisma_zmin_es_cero` |
 | T-198 | 001/FR-004 | tests/unit/test_recipes_cilindro.py | `test_cilindro_zmin_es_cero` |
+| T-20 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_volumen` |
 | T-200 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_con_agujero_prisma` |
 | T-201 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_con_agujero_cilindro` |
 | T-202 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_cargar_proyecto_json_con_agujero` |
 | T-203 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_diametro_faltante` |
+| T-204 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_ciego_via_ui` |
+| T-205 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_desplazado_via_ui` |
+| T-206 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_fuera_de_cara_retorna_error` |
+| T-207 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_cargar_proyecto_json_agujero_completo` |
+| T-208 | 001/FR-002 | tests/e2e/test_proyecto.py | `test_generar_agujero_ciego_sin_profundidad_retorna_error` |
+| T-21 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_profundidad_mayor_que_espesor_es_rechazado` |
+| T-22 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_profundidad_cero_es_rechazado` |
+| T-23 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_volumen` |
+| T-24 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_profundidad_mayor_que_alto_es_rechazado` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -74,5 +90,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 69
+**Total tests trazados**: 85
 **Feature IDs cubiertos**: 12

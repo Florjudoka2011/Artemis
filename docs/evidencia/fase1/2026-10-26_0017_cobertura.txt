@@ -1,0 +1,32 @@
+........................................................................ [ 69%]
+................................
+ERROR: Coverage failure: total of 87 is less than fail-under=90
+                                                                         [100%]
+============================== warnings summary ===============================
+tests\e2e\test_visor_playwright.py:38
+  D:\Proyecto\tests\e2e\test_visor_playwright.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.visor - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.visor
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.0-final-0 _______________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+src\__init__.py                         0      0   100%
+src\export\__init__.py                  0      0   100%
+src\export\solid.py                    12      0   100%
+src\recipes\__init__.py                 0      0   100%
+src\recipes\cilindro.py                10      0   100%
+src\recipes\prisma_rectangular.py      21      5    76%   49-56
+src\schemas\__init__.py                 0      0   100%
+src\schemas\figuras.py                 57      0   100%
+src\ui\__init__.py                      0      0   100%
+src\ui\app.py                         131     29    78%   40-48, 104-105, 167-185, 281-294, 345
+src\ui\visor.py                        19      0   100%
+src\ui\workspace.py                     9      0   100%
+src\views_iram\__init__.py              0      0   100%
+-----------------------------------------------------------------
+TOTAL                                 259     34    87%
+FAIL Required test coverage of 90% not reached. Total coverage: 86.87%
+104 passed, 1 deselected, 1 warning in 18.90s

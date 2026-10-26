@@ -1,0 +1,23 @@
+........................................................................ [ 94%]
+....                                                                     [100%]
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.0-final-0 _______________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+src\__init__.py                         0      0   100%
+src\export\__init__.py                  0      0   100%
+src\export\solid.py                    12      0   100%
+src\recipes\__init__.py                 0      0   100%
+src\recipes\cilindro.py                 6      1    83%   18
+src\recipes\prisma_rectangular.py       6      1    83%   18
+src\schemas\__init__.py                 0      0   100%
+src\schemas\figuras.py                 57      0   100%
+src\ui\__init__.py                      0      0   100%
+src\ui\app.py                          58      0   100%
+src\ui\workspace.py                     9      0   100%
+src\views_iram\__init__.py              0      0   100%
+-----------------------------------------------------------------
+TOTAL                                 148      2    99%
+Required test coverage of 90% reached. Total coverage: 98.65%
+76 passed in 17.38s

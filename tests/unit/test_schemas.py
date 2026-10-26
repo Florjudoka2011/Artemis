@@ -155,7 +155,7 @@ def test_valor_cero_rechazado(cls, kwargs):
     "cls,kwargs",
     [
         (PrismaRectangularParams, {"largo": 100, "ancho": 60, "alto": 40, "color": "rojo"}),
-        (AgujeroParams, {"diametro": 20, "cara": CaraAgujero.superior, "profundidad": 50}),
+        (AgujeroParams, {"diametro": 20, "cara": CaraAgujero.superior, "color": "rojo"}),
     ],
 )
 def test_campo_extra_rechazado(cls, kwargs):
