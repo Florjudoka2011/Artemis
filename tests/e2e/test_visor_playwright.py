@@ -51,24 +51,23 @@ def test_visor_renderiza_modelo_3d(browser_page):
     """
     page = browser_page
 
-    # Completar formulario
-    page.fill(
-        'input[label="Largo (mm)"], [data-testid*="largo"] input, '
-        '#component-1 input, textarea[placeholder*="largo"]',
-        "100",
-    )
+    # Esperar que Gradio 6.x cargue los textboxes (renderizados como textarea)
+    page.wait_for_selector("textarea", timeout=30_000)
+    page.wait_for_timeout(1000)
 
-    # Buscar los campos de texto de forma mas robusta
-    inputs = page.query_selector_all('input[type="text"], textarea')
-    # Los primeros 3 inputs visibles son largo, ancho, alto
-    visible_inputs = [i for i in inputs if i.is_visible()]
+    # Buscar los campos de texto (Gradio 6.x usa <textarea> para gr.Textbox)
+    textareas = page.query_selector_all("textarea")
+    # Los 3 primeros textareas visibles con ancho ~400 son largo, ancho, alto.
+    # El ultimo textarea (ancho ~1190) es el campo Resultado (output, no editar).
+    visible_textareas = [t for t in textareas if t.is_visible()]
+    input_textareas = visible_textareas[:3]  # largo, ancho, alto
     assert (
-        len(visible_inputs) >= 3
-    ), f"Se esperaban al menos 3 inputs visibles, encontrados: {len(visible_inputs)}"
+        len(input_textareas) >= 3
+    ), f"Se esperaban al menos 3 textareas visibles, encontrados: {len(visible_textareas)}"
 
-    visible_inputs[0].fill("100")  # largo
-    visible_inputs[1].fill("60")  # ancho
-    visible_inputs[2].fill("40")  # alto
+    input_textareas[0].fill("100")  # largo
+    input_textareas[1].fill("60")  # ancho
+    input_textareas[2].fill("40")  # alto
 
     # Clic en Generar
     page.click('button:has-text("Generar")')

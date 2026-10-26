@@ -50,9 +50,22 @@ embebido en un componente `gr.HTML` con `elem_id="visor-3d"`.
 - **Referencia visual**: GridHelper + AxesHelper, estilo Cura.
 - **Convención de ejes**: CadQuery genera Z-up. Three.js usa Y-up. Se aplica rotación
   `-Math.PI/2` en X para alinear los ejes al mostrar el modelo.
-- **Servicio de archivos**: los STL se sirven via `/file=<ruta>` de Gradio. La ruta del workspace
-  (`C:/Artemis/workspace`) y el directorio static (`src/ui/static`) se declaran en
-  `allowed_paths` de `launch()`.
+- **Servicio de archivos**: los STL y archivos static se sirven via
+  `/gradio_api/file=<ruta>` (Gradio 6.x — `API_PREFIX=/gradio_api`).
+  `gr.set_static_paths([src/ui/static])` registra los archivos Three.js.
+  El workspace se declara en `allowed_paths` de `launch()`.
+- **Integración con Gradio**: los `<script>` en `gr.HTML` son bloqueados por Gradio
+  (issue #7649 — innerHTML no ejecuta scripts). Solución: `<iframe srcdoc="...">` con
+  `sandbox="allow-scripts allow-same-origin"`.
+- **Advertencia sandbox**: la combinación `allow-scripts` + `allow-same-origin` en el
+  atributo sandbox del iframe puede en teoría permitir escapar el sandbox. Es aceptable
+  porque: (1) el origen es `127.0.0.1:7860` — loopback exclusivo, sin acceso desde red;
+  (2) el contenido del srcdoc es generado completamente por código Python interno, sin
+  aceptar HTML externo; (3) las URLs de scripts usan `/gradio_api/file=` que requiere
+  `gr.set_static_paths()` — no sirve rutas arbitrarias.
+  Si en el futuro se requiere un sandbox más estricto, la alternativa es inline todos
+  los scripts en el srcdoc (sin requests externos), eliminando la necesidad de
+  `allow-same-origin`.
 
 ---
 

@@ -161,21 +161,28 @@ def iniciar() -> None:
     server_name y server_port son fijos por requisito de seguridad (T-173):
     la app nunca escucha en 0.0.0.0 ni en ninguna IP externa.
 
-    allowed_paths restringe los archivos que Gradio puede servir al navegador
-    al workspace configurado (T-185). Sin esto gr.Model3D no puede mostrar el
-    STL generado en _WORKSPACE_BASE.
+    gr.set_static_paths registra src/ui/static/ para que Gradio sirva
+    los archivos de Three.js via /file=<ruta_absoluta> sin depender de
+    allowed_paths (cuya comparacion de rutas falla en Windows por
+    backslashes vs forward-slashes en Gradio 6.x).
+
+    allowed_paths autoriza el workspace para los STL generados dinamicamente.
     """
+    import gradio as gr
     from pathlib import Path
 
     from src.ui.workspace import _WORKSPACE_BASE
 
     _static_dir = Path(__file__).parent / "static"
 
+    # Registrar directorio estatico antes de crear la interfaz
+    gr.set_static_paths(paths=[str(_static_dir)])
+
     demo = crear_interfaz()
     demo.launch(
         server_name="127.0.0.1",
         server_port=7860,
-        allowed_paths=[str(_WORKSPACE_BASE), str(_static_dir)],
+        allowed_paths=[str(_WORKSPACE_BASE)],
     )
 
 
