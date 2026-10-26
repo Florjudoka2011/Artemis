@@ -23,7 +23,7 @@ def generar(
     """Valida los parámetros del formulario y construye el sólido.
 
     Retorna (mensaje, ruta_stl) donde ruta_stl es None en caso de error.
-    ruta_stl apunta al archivo .stl para el visor 3D (gr.Model3D acepta .stl).
+    ruta_stl apunta al archivo .stl para el visor 3D Three.js.
     """
     faltantes: list[str] = []
 
@@ -86,6 +86,19 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
     """
     import gradio as gr
 
+    from src.ui.visor import make_viewer_html
+
+    def generar_con_visor(
+        largo: str,
+        ancho: str,
+        alto: str,
+        diametro: str,
+        figura: str,
+        vistas_iram: bool,
+    ) -> tuple[str, str]:
+        mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram)
+        return mensaje, make_viewer_html(ruta_stl)
+
     with gr.Blocks(title="Artemis") as demo:
         gr.Markdown("## Artemis — Generador de modelos 3D")
 
@@ -127,10 +140,14 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         btn = gr.Button("Generar", variant="primary")
         salida = gr.Textbox(label="Resultado", interactive=False)
-        visor = gr.Model3D(label="Vista 3D", value=None)
+        visor = gr.HTML(
+            value=make_viewer_html(None),
+            label="Vista 3D",
+            elem_id="visor-3d",
+        )
 
         btn.click(
-            fn=generar,
+            fn=generar_con_visor,
             inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
             outputs=[salida, visor],
         )
@@ -148,13 +165,17 @@ def iniciar() -> None:
     al workspace configurado (T-185). Sin esto gr.Model3D no puede mostrar el
     STL generado en _WORKSPACE_BASE.
     """
+    from pathlib import Path
+
     from src.ui.workspace import _WORKSPACE_BASE
+
+    _static_dir = Path(__file__).parent / "static"
 
     demo = crear_interfaz()
     demo.launch(
         server_name="127.0.0.1",
         server_port=7860,
-        allowed_paths=[str(_WORKSPACE_BASE)],
+        allowed_paths=[str(_WORKSPACE_BASE), str(_static_dir)],
     )
 
 

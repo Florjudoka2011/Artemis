@@ -240,19 +240,25 @@ def test_visor_3d_recibe_ruta_stl_valida(monkeypatch, tmp_path):
 
 @pytest.mark.mvp
 def test_formulario_tiene_visor_3d():
-    """T-183 | 001/FR-013 — La interfaz incluye un componente Model3D como visor.
+    """T-183 | 001/FR-013 — La interfaz incluye un visor 3D.
 
     Prueba: src/ui/app.py::crear_interfaz
 
-    Verifica que la interfaz tiene un gr.Model3D en sus bloques.
+    Originalmente verificaba gr.Model3D (Babylon.js WebGPU). Supersedido por T-186
+    tras el bug WebGPU (Brave/Edge). Ahora verifica que existe gr.HTML con
+    elem_id='visor-3d' (Three.js WebGL), que es el requisito funcional real
+    (FR-013: visor interactivo integrado).
     """
     import gradio as gr
 
     demo = crear_interfaz(conector_ia=None)
-    tiene_model3d = any(isinstance(c, gr.Model3D) for c in demo.blocks.values())
-    assert tiene_model3d, (
-        "La interfaz no tiene componente gr.Model3D. "
-        "Se necesita para mostrar el objeto generado en 3D."
+    tiene_visor = any(
+        isinstance(c, gr.HTML) and getattr(c, "elem_id", None) == "visor-3d"
+        for c in demo.blocks.values()
+    )
+    assert tiene_visor, (
+        "La interfaz no tiene visor 3D (gr.HTML con elem_id='visor-3d'). "
+        "Se necesita para mostrar el objeto generado en 3D (FR-013)."
     )
 
 
@@ -432,6 +438,13 @@ def test_iniciar_autoriza_workspace_en_allowed_paths(monkeypatch):
     assert any(str(p) == workspace_str for p in allowed), (
         f"allowed_paths debe contener '{workspace_str}'. " f"Obtenido: {allowed}"
     )
+    # Desde T-186: también debe incluir el directorio static de Three.js
+    from pathlib import Path
+
+    static_str = str(Path(__file__).parent.parent.parent / "src" / "ui" / "static")
+    assert any(
+        str(p) == static_str for p in allowed
+    ), f"allowed_paths debe contener '{static_str}' (Three.js). Obtenido: {allowed}"
 
 
 @pytest.mark.mvp
@@ -488,9 +501,11 @@ def test_make_viewer_html_contiene_ruta_stl(tmp_path):
 
     html = make_viewer_html(str(stl_fake))
 
+    # make_viewer_html convierte backslashes a forward-slashes para la URL del navegador
+    stl_url_fragment = str(stl_fake).replace("\\", "/")
     assert (
-        str(stl_fake) in html
-    ), f"El HTML debe contener la ruta '{stl_fake}' para que Three.js pueda cargar el STL."
+        stl_url_fragment in html
+    ), f"El HTML debe contener la ruta '{stl_url_fragment}' para que Three.js cargue el STL."
     assert (
         "three" in html.lower() or "visor" in html.lower()
     ), "El HTML debe referenciar Three.js o identificar el visor."

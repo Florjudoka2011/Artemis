@@ -10,6 +10,17 @@
 | skia-python | 144.0 | BSD-3-Clause | https://github.com/kyamagu/skia-python |
 | mcp | 2.3.0 | MIT | https://github.com/modelcontextprotocol/python-sdk |
 
+## Archivos estáticos incluidos localmente
+
+| Archivo | Versión | Licencia | URL fuente |
+|---------|---------|----------|-----------|
+| src/ui/static/three/three.min.js | r0.128.0 | MIT | https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js |
+| src/ui/static/three/STLLoader.js | r0.128.0 | MIT | https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js |
+| src/ui/static/three/OrbitControls.js | r0.128.0 | MIT | https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js |
+
+Motivo de inclusión local: principio "todo local" de la constitución. Sin CDN en runtime.
+Ver ADR `docs/ADR/003-visor-3d.md`.
+
 ## Notas
 
 - `mcp 2.3.0`: SDK oficial de Model Context Protocol para Python. Versión mínima requerida
