@@ -140,12 +140,21 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
             ruta_step_path = Path(ruta_stl).with_suffix(".step")
             ruta_step = str(ruta_step_path) if ruta_step_path.exists() else None
+            ruta_json = str(Path(ruta_stl).parent / "proyecto.json")
             btn_stl_update = _gr.update(visible=True, value=ruta_stl)
             btn_step_update = _gr.update(visible=True, value=ruta_step)
+            btn_json_update = _gr.update(visible=True, value=ruta_json)
         else:
             btn_stl_update = _gr.update(visible=False, value=None)
             btn_step_update = _gr.update(visible=False, value=None)
-        return mensaje, make_viewer_html(ruta_stl), btn_stl_update, btn_step_update
+            btn_json_update = _gr.update(visible=False, value=None)
+        return (
+            mensaje,
+            make_viewer_html(ruta_stl),
+            btn_stl_update,
+            btn_step_update,
+            btn_json_update,
+        )
 
     with gr.Blocks(title="Artemis") as demo:
         gr.Markdown("## Artemis — Generador de modelos 3D")
@@ -197,15 +206,20 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         with gr.Row():
             btn_stl = gr.DownloadButton(label="Descargar STL", value=None, visible=False)
             btn_step = gr.DownloadButton(label="Descargar STEP", value=None, visible=False)
+            btn_json = gr.DownloadButton(label="Descargar proyecto", value=None, visible=False)
 
         btn.click(
             fn=generar_con_visor,
             inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
-            outputs=[salida, visor, btn_stl, btn_step],
+            outputs=[salida, visor, btn_stl, btn_step, btn_json],
         )
 
         # Sección "Abrir proyecto"
-        gr.Markdown("---\n### Abrir proyecto")
+        gr.Markdown(
+            "---\n### Abrir proyecto\n\n"
+            "Para editar una pieza, abrí su proyecto.json. "
+            "Los archivos STL y STEP son para impresión y programas de CAD."
+        )
         archivo_proyecto = gr.File(label="Cargar proyecto.json", file_types=[".json"])
 
         def abrir_proyecto(archivo):
