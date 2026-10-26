@@ -83,7 +83,13 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-212 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_lateral_izq_v_coloca_agujero_en_z_correcto` |
 | T-213 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_lateral_der_v_coloca_agujero_en_z_correcto` |
 | T-214 | 001/FR-010 | tests/unit/test_posicion_agujero.py | `test_superior_u_v_colocan_agujero_correctamente` |
+| T-215 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_sin_diametro_retorna_vacio` |
+| T-216 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_sin_dimensiones_retorna_vacio` |
+| T-217 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_cara_superior` |
+| T-218 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_cara_frontal` |
+| T-219 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_cara_lateral_izq` |
 | T-22 | 001/FR-002 | tests/unit/test_recipes_prisma.py | `test_prisma_agujero_ciego_profundidad_cero_es_rechazado` |
+| T-220 | 001/FR-010 | tests/unit/test_ui_rango.py | `test_rango_diametro_excede_cara` |
 | T-23 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_volumen` |
 | T-24 | 001/FR-002 | tests/unit/test_recipes_cilindro.py | `test_cilindro_agujero_ciego_profundidad_mayor_que_alto_es_rechazado` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
@@ -96,5 +102,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 91
+**Total tests trazados**: 97
 **Feature IDs cubiertos**: 12
