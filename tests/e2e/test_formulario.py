@@ -329,15 +329,15 @@ def test_actualizar_campos_visibilidad_por_figura():
     )
     actualizar = fn_record.fn
 
-    # Caso prisma_rectangular
-    largo_u, ancho_u, alto_u, diametro_u = actualizar("prisma_rectangular")
+    # Caso prisma_rectangular (chk=False: sin agujero, u/v ocultos)
+    largo_u, ancho_u, alto_u, diametro_u, *_ = actualizar("prisma_rectangular", False)
     assert largo_u["visible"] is True, "largo debe ser visible para prisma_rectangular"
     assert ancho_u["visible"] is True, "ancho debe ser visible para prisma_rectangular"
     assert alto_u["visible"] is True, "alto debe ser visible para prisma_rectangular"
     assert diametro_u["visible"] is False, "diametro debe estar oculto para prisma_rectangular"
 
     # Caso cilindro
-    largo_u, ancho_u, alto_u, diametro_u = actualizar("cilindro")
+    largo_u, ancho_u, alto_u, diametro_u, *_ = actualizar("cilindro", False)
     assert largo_u["visible"] is False, "largo debe estar oculto para cilindro"
     assert ancho_u["visible"] is False, "ancho debe estar oculto para cilindro"
     assert alto_u["visible"] is True, "alto debe ser visible para cilindro"

@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.venv_viejo/
 env/
 
 # Secretos y configuración local

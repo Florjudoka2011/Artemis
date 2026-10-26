@@ -1,0 +1,2 @@
+Trazabilidad generada: D:\Proyecto\docs\trazabilidad.md
+  38 tests trazados, 9 feature IDs cubiertos
