@@ -15,6 +15,11 @@ from src.schemas.figuras import CilindroParams, PrismaRectangularParams
 
 ARTEMIS_VERSION = "1.0.0"
 
+# Columnas de la tabla de operaciones (en orden de visualización)
+_TABLA_HEADERS = ["cara", "diámetro", "u", "v", "tipo", "profundidad"]
+_TABLA_TYPES = ["str", "number", "number", "number", "str", "number"]
+_TABLA_DEFAULTS = ["superior", 10.0, 0.0, 0.0, "pasante", 0.0]
+
 
 def generar(
     largo: str = "",
@@ -23,11 +28,13 @@ def generar(
     diametro: str = "",
     figura: str = "prisma_rectangular",
     vistas_iram: bool = False,
+    operaciones: list | None = None,
 ) -> tuple[str, str | None]:
     """Valida los parámetros del formulario y construye el sólido.
 
     Retorna (mensaje, ruta_stl) donde ruta_stl es None en caso de error.
     ruta_stl apunta al archivo .stl para el visor 3D Three.js.
+    operaciones: lista de dicts con campos de OperacionAgujeroParams.
     """
     faltantes: list[str] = []
 
@@ -44,6 +51,7 @@ def generar(
                 largo=float(largo),
                 ancho=float(ancho),
                 alto=float(alto),
+                operaciones=operaciones or [],
             )
         except (ValidationError, ValueError) as exc:
             return f"Error de validación: {exc}", None
@@ -82,7 +90,7 @@ def generar(
     # Guardar proyecto.json junto al STL para reproducibilidad (T-193)
     proyecto_data = {
         "figura": figura,
-        "parametros": params.model_dump(exclude={"agujero", "vistas_iram"}),
+        "parametros": params.model_dump(exclude={"vistas_iram"}),
         "version_artemis": ARTEMIS_VERSION,
         "fecha": datetime.now().isoformat(),
     }
@@ -95,18 +103,69 @@ def generar(
 def cargar_proyecto_json(ruta_json: str) -> dict:
     """Carga un proyecto.json y devuelve un dict con los campos del formulario.
 
-    Retorna dict con claves: figura, largo, ancho, alto, diametro.
+    Retorna dict con claves: figura, largo, ancho, alto, diametro, operaciones.
     Los valores numéricos se convierten a str para rellenar gr.Textbox.
     Campos ausentes quedan como str vacío.
+
+    Compatibilidad: proyectos con formato viejo (campo 'agujero' en parametros,
+    sin version_esquema) se convierten automáticamente al formato nuevo.
     """
     data = json.loads(open(ruta_json, encoding="utf-8").read())
     params = data.get("parametros", {})
+
+    # --- Migración de formato viejo (campo 'agujero') al nuevo (campo 'operaciones') ---
+    if "agujero" in params and params["agujero"] is not None:
+        agujero_viejo = params["agujero"]
+        largo_val = float(params.get("largo", 0))
+        ancho_val = float(params.get("ancho", 0))
+        alto_val = float(params.get("alto", 0))
+        cara = agujero_viejo.get("cara", "superior")
+
+        # Convertir offset_x/offset_y (desde centro) a u/v (desde borde)
+        if cara in ("superior", "inferior"):
+            u = largo_val / 2 + float(agujero_viejo.get("offset_x", 0))
+            v = ancho_val / 2 + float(agujero_viejo.get("offset_y", 0))
+        elif cara in ("frontal", "trasera"):
+            u = largo_val / 2 + float(agujero_viejo.get("offset_x", 0))
+            v = alto_val / 2 + float(agujero_viejo.get("offset_y", 0))
+        else:  # lateral_izq / lateral_der
+            u = ancho_val / 2 + float(agujero_viejo.get("offset_x", 0))
+            v = alto_val / 2 + float(agujero_viejo.get("offset_y", 0))
+
+        operaciones = [
+            {
+                "tipo": "agujero",
+                "diametro": float(agujero_viejo.get("diametro", 10)),
+                "cara": cara,
+                "subtipo": "pasante",
+                "u": u,
+                "v": v,
+                "profundidad": 0.0,
+            }
+        ]
+    else:
+        # Formato nuevo: operaciones ya en la lista (o vacía)
+        operaciones_raw = params.get("operaciones", [])
+        operaciones = [
+            {
+                "tipo": op.get("tipo", "agujero"),
+                "diametro": float(op.get("diametro", 10)),
+                "cara": op.get("cara", "superior"),
+                "subtipo": op.get("subtipo", "pasante"),
+                "u": float(op.get("u", 0)),
+                "v": float(op.get("v", 0)),
+                "profundidad": float(op.get("profundidad", 0)),
+            }
+            for op in operaciones_raw
+        ]
+
     return {
         "figura": data.get("figura", "prisma_rectangular"),
         "largo": str(params["largo"]) if "largo" in params else "",
         "ancho": str(params["ancho"]) if "ancho" in params else "",
         "alto": str(params["alto"]) if "alto" in params else "",
         "diametro": str(params["diametro"]) if "diametro" in params else "",
+        "operaciones": operaciones,
     }
 
 
@@ -120,9 +179,30 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
     from src.ui.visor import make_viewer_html
 
-    # Estado interno para rutas de archivos generados
-    _ruta_stl_state: list[str | None] = [None]
-    _ruta_step_state: list[str | None] = [None]
+    def _tabla_a_operaciones(tabla) -> list[dict]:
+        """Convierte el valor de gr.Dataframe a lista de dicts de operaciones."""
+        if tabla is None:
+            return []
+        rows = tabla if isinstance(tabla, list) else tabla.values.tolist()
+        ops = []
+        for row in rows:
+            if not row or len(row) < 6:
+                continue
+            try:
+                ops.append(
+                    {
+                        "tipo": "agujero",
+                        "cara": str(row[0]) if row[0] else "superior",
+                        "diametro": float(row[1]) if row[1] is not None else 10.0,
+                        "u": float(row[2]) if row[2] is not None else 0.0,
+                        "v": float(row[3]) if row[3] is not None else 0.0,
+                        "subtipo": str(row[4]) if row[4] else "pasante",
+                        "profundidad": float(row[5]) if row[5] is not None else 0.0,
+                    }
+                )
+            except (TypeError, ValueError):
+                continue
+        return ops
 
     def generar_con_visor(
         largo: str,
@@ -131,23 +211,24 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         diametro: str,
         figura: str,
         vistas_iram: bool,
-    ) -> tuple[str, str, str | None, str | None]:
-        mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram)
-        import gradio as _gr
+        tabla_agujeros,
+    ) -> tuple[str, str, Any, Any, Any]:
+        ops = _tabla_a_operaciones(tabla_agujeros)
+        mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram, ops)
 
         if ruta_stl is not None:
             from pathlib import Path
 
             ruta_step_path = Path(ruta_stl).with_suffix(".step")
             ruta_step = str(ruta_step_path) if ruta_step_path.exists() else None
-            ruta_json = str(Path(ruta_stl).parent / "proyecto.json")
-            btn_stl_update = _gr.update(visible=True, value=ruta_stl)
-            btn_step_update = _gr.update(visible=True, value=ruta_step)
-            btn_json_update = _gr.update(visible=True, value=ruta_json)
+            ruta_json_path = str(Path(ruta_stl).parent / "proyecto.json")
+            btn_stl_update = gr.update(visible=True, value=ruta_stl)
+            btn_step_update = gr.update(visible=True, value=ruta_step)
+            btn_json_update = gr.update(visible=True, value=ruta_json_path)
         else:
-            btn_stl_update = _gr.update(visible=False, value=None)
-            btn_step_update = _gr.update(visible=False, value=None)
-            btn_json_update = _gr.update(visible=False, value=None)
+            btn_stl_update = gr.update(visible=False, value=None)
+            btn_step_update = gr.update(visible=False, value=None)
+            btn_json_update = gr.update(visible=False, value=None)
         return (
             mensaje,
             make_viewer_html(ruta_stl),
@@ -195,6 +276,41 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
                 info="Disponible en Phase 5 (US3)",
             )
 
+        # --- Tabla de operaciones (agujeros) ---
+        gr.Markdown("### Agujeros")
+        tabla_agujeros = gr.Dataframe(
+            headers=_TABLA_HEADERS,
+            datatype=_TABLA_TYPES,
+            row_count=(0, "dynamic"),
+            col_count=(6, "fixed"),
+            label="Operaciones",
+            value=[],
+            interactive=True,
+        )
+
+        with gr.Row():
+            btn_agregar = gr.Button("Agregar fila")
+            btn_quitar = gr.Button("Quitar última")
+
+        def _agregar_fila(df):
+            rows = df if isinstance(df, list) else df.values.tolist()
+            return rows + [list(_TABLA_DEFAULTS)]
+
+        def _quitar_ultima(df):
+            rows = df if isinstance(df, list) else df.values.tolist()
+            return rows[:-1] if rows else []
+
+        btn_agregar.click(
+            fn=_agregar_fila,
+            inputs=tabla_agujeros,
+            outputs=tabla_agujeros,
+        )
+        btn_quitar.click(
+            fn=_quitar_ultima,
+            inputs=tabla_agujeros,
+            outputs=tabla_agujeros,
+        )
+
         btn = gr.Button("Generar", variant="primary")
         salida = gr.Textbox(label="Resultado", interactive=False)
         visor = gr.HTML(
@@ -210,7 +326,7 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         btn.click(
             fn=generar_con_visor,
-            inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
+            inputs=[largo, ancho, alto, diametro, figura, vistas_iram, tabla_agujeros],
             outputs=[salida, visor, btn_stl, btn_step, btn_json],
         )
 
@@ -224,21 +340,41 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         def abrir_proyecto(archivo):
             if archivo is None:
-                return gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
+                return (
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                )
             params = cargar_proyecto_json(archivo.name)
             es_prisma = params["figura"] == "prisma_rectangular"
+            ops = params.get("operaciones", [])
+            ops_rows = [
+                [
+                    op["cara"],
+                    op["diametro"],
+                    op["u"],
+                    op["v"],
+                    op["subtipo"],
+                    op["profundidad"],
+                ]
+                for op in ops
+            ]
             return (
                 gr.update(value=params["figura"]),
                 gr.update(value=params["largo"], visible=es_prisma),
                 gr.update(value=params["ancho"], visible=es_prisma),
                 gr.update(value=params["alto"]),
                 gr.update(value=params["diametro"], visible=not es_prisma),
+                gr.update(value=ops_rows),
             )
 
         archivo_proyecto.change(
             fn=abrir_proyecto,
             inputs=archivo_proyecto,
-            outputs=[figura, largo, ancho, alto, diametro],
+            outputs=[figura, largo, ancho, alto, diametro, tabla_agujeros],
         )
 
     return demo
