@@ -129,3 +129,54 @@ def test_cilindro_agujero_exactamente_en_limite_es_rechazado():
     )
     with pytest.raises(ValueError, match="[Dd]i[aá]metro"):
         construir(params)
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_ciego_volumen():
+    """T-23 | 001/FR-002 — Cilindro Ø50×80 con agujero ciego Ø20, prof=25 → volumen correcto.
+
+    Prueba: src/recipes/cilindro.py::construir
+
+    Valor esperado: π × 25² × 80 − π × 10² × 25
+    = π × (625 × 80 − 100 × 25) = π × (50000 − 2500) = π × 47500 = 149225.652 mm³
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
+
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(
+            diametro=20,
+            cara=CaraAgujero.superior,
+            tipo=TipoAgujero.ciego,
+            profundidad=25.0,
+        ),
+    )
+    solido = construir(params)
+    volumen = solido.val().Volume()
+    esperado = math.pi * 25**2 * 80 - math.pi * 10**2 * 25
+    assert math.isclose(
+        volumen, esperado, rel_tol=1e-6
+    ), f"Volumen esperado {esperado:.3f} mm³, obtenido {volumen}"
+
+
+@pytest.mark.mvp
+def test_cilindro_agujero_ciego_profundidad_mayor_que_alto_es_rechazado():
+    """T-24 | 001/FR-002 — Cilindro agujero ciego con profundidad > alto → rechazado.
+
+    Prueba: src/recipes/cilindro.py::construir
+    """
+    from src.schemas.figuras import AgujeroParams, CaraAgujero, TipoAgujero
+
+    params = CilindroParams(
+        diametro=50,
+        alto=80,
+        agujero=AgujeroParams(
+            diametro=20,
+            cara=CaraAgujero.superior,
+            tipo=TipoAgujero.ciego,
+            profundidad=81.0,
+        ),
+    )
+    with pytest.raises(ValueError, match="[Pp]rofundidad|[Ee]spesor"):
+        construir(params)
