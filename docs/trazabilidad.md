@@ -43,6 +43,23 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-186 | 001/FR-013 | tests/e2e/test_formulario.py | `test_interfaz_usa_visor_html_threejs` |
 | T-187 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_contiene_ruta_stl` |
 | T-188 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_usa_iframe_srcdoc` |
+| T-190 | 001/FR-013 | tests/e2e/test_formulario.py | `test_make_viewer_html_usa_urls_absolutas` |
+| T-191 | 001/FR-013 | tests/e2e/test_formulario.py | `test_iniciar_llama_set_static_paths` |
+| T-193 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_generar_guarda_proyecto_json` |
+| T-194 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_interfaz_tiene_descarga_stl_step` |
+| T-195 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_cargar_proyecto_json_devuelve_params` |
+| T-196 | 001/FR-014 | tests/e2e/test_proyecto.py | `test_round_trip_proyecto_mismo_hash` |
+| T-197 | 001/FR-004 | tests/unit/test_recipes_prisma.py | `test_prisma_zmin_es_cero` |
+| T-198 | 001/FR-004 | tests/unit/test_recipes_cilindro.py | `test_cilindro_zmin_es_cero` |
+| T-200 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t200_operaciones_lista_vacia` |
+| T-201 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t201_limite_21_operaciones` |
+| T-202 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t202_compatibilidad_formato_viejo` |
+| T-203 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t203_dos_agujeros_sin_superposicion` |
+| T-204 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t204_dos_agujeros_superpuestos_rechazado` |
+| T-205 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t205_agujeros_caras_distintas_aceptado` |
+| T-206 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t206_volumen_dos_agujeros_pasantes` |
+| T-207 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t207_cruce_ejes_no_dentro_del_solido` |
+| T-208 | 001/FR-020 | tests/unit/test_varios_agujeros.py | `test_t208_interfaz_tiene_tabla_agujeros` |
 | T-900 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_prisma_valido` |
 | T-900 | 001/FR-006 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_duplicado_mismo_tid` |
 | T-901 | 001/FR-005 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_campo_faltante` |
@@ -53,5 +70,5 @@ _Generado automáticamente por `scripts/gen_traceability.py`_
 | T-906 | 001/FR-012 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_fr012_distinto` |
 | T-908 | 001/FR-001 | tests/fixtures/repo_ejemplo/tests/unit/test_schemas.py | `test_sin_linea_prueba` |
 
-**Total tests trazados**: 48
-**Feature IDs cubiertos**: 10
+**Total tests trazados**: 65
+**Feature IDs cubiertos**: 12

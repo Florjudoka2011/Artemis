@@ -80,7 +80,6 @@ def main() -> None:
         "",
         f"**Total tests trazados**: {len(all_entries)}",
         f"**Feature IDs cubiertos**: {len(seen_frs)}",
-        "",
     ]
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

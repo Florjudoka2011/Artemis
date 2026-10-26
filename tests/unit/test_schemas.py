@@ -31,7 +31,8 @@ def test_prisma_valido_completo():
     assert p.largo == 100.0
     assert p.ancho == 60.0
     assert p.alto == 40.0
-    assert p.agujero is None
+    assert p.operaciones == []
+    assert p.version_esquema == 2
     assert p.vistas_iram is False
 
 
