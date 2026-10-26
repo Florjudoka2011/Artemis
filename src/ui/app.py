@@ -23,6 +23,8 @@ def generar(
     diametro: str = "",
     figura: str = "prisma_rectangular",
     vistas_iram: bool = False,
+    tiene_agujero: bool = False,
+    diametro_agujero: str = "",
 ) -> tuple[str, str | None]:
     """Valida los parámetros del formulario y construye el sólido.
 
@@ -30,6 +32,20 @@ def generar(
     ruta_stl apunta al archivo .stl para el visor 3D Three.js.
     """
     faltantes: list[str] = []
+
+    from src.schemas.figuras import AgujeroParams, CaraAgujero
+
+    agujero_params = None
+    if tiene_agujero:
+        if not diametro_agujero or not diametro_agujero.strip():
+            return "Faltan campos obligatorios: diametro_agujero", None
+        try:
+            agujero_params = AgujeroParams(
+                diametro=float(diametro_agujero),
+                cara=CaraAgujero.superior,
+            )
+        except (ValidationError, ValueError) as exc:
+            return f"Error de validación del agujero: {exc}", None
 
     if figura == "prisma_rectangular":
         campos = {"largo": largo, "ancho": ancho, "alto": alto}
@@ -44,6 +60,7 @@ def generar(
                 largo=float(largo),
                 ancho=float(ancho),
                 alto=float(alto),
+                agujero=agujero_params,
             )
         except (ValidationError, ValueError) as exc:
             return f"Error de validación: {exc}", None
@@ -60,6 +77,7 @@ def generar(
             params = CilindroParams(
                 diametro=float(diametro),
                 alto=float(alto),
+                agujero=agujero_params,
             )
         except (ValidationError, ValueError) as exc:
             return f"Error de validación: {exc}", None
@@ -80,9 +98,17 @@ def generar(
     ruta_step = exportar_step(solido, ws / f"{figura}.step")
 
     # Guardar proyecto.json junto al STL para reproducibilidad (T-193)
+    parametros_dict = params.model_dump(exclude={"vistas_iram"})
+    # Serializar agujero como dict simple (CaraAgujero → str)
+    if parametros_dict.get("agujero") is not None:
+        ag = parametros_dict["agujero"]
+        parametros_dict["agujero"] = {
+            "diametro": ag["diametro"],
+            "cara": ag["cara"].value if hasattr(ag["cara"], "value") else ag["cara"],
+        }
     proyecto_data = {
         "figura": figura,
-        "parametros": params.model_dump(exclude={"agujero", "vistas_iram"}),
+        "parametros": parametros_dict,
         "version_artemis": ARTEMIS_VERSION,
         "fecha": datetime.now().isoformat(),
     }
@@ -95,18 +121,22 @@ def generar(
 def cargar_proyecto_json(ruta_json: str) -> dict:
     """Carga un proyecto.json y devuelve un dict con los campos del formulario.
 
-    Retorna dict con claves: figura, largo, ancho, alto, diametro.
+    Retorna dict con claves: figura, largo, ancho, alto, diametro,
+    tiene_agujero, diametro_agujero.
     Los valores numéricos se convierten a str para rellenar gr.Textbox.
     Campos ausentes quedan como str vacío.
     """
     data = json.loads(open(ruta_json, encoding="utf-8").read())
     params = data.get("parametros", {})
+    agujero = params.get("agujero")
     return {
         "figura": data.get("figura", "prisma_rectangular"),
         "largo": str(params["largo"]) if "largo" in params else "",
         "ancho": str(params["ancho"]) if "ancho" in params else "",
         "alto": str(params["alto"]) if "alto" in params else "",
         "diametro": str(params["diametro"]) if "diametro" in params else "",
+        "tiene_agujero": agujero is not None,
+        "diametro_agujero": str(agujero["diametro"]) if agujero else "",
     }
 
 
@@ -131,8 +161,12 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         diametro: str,
         figura: str,
         vistas_iram: bool,
+        tiene_agujero: bool,
+        diametro_agujero: str,
     ) -> tuple[str, str, str | None, str | None]:
-        mensaje, ruta_stl = generar(largo, ancho, alto, diametro, figura, vistas_iram)
+        mensaje, ruta_stl = generar(
+            largo, ancho, alto, diametro, figura, vistas_iram, tiene_agujero, diametro_agujero
+        )
         import gradio as _gr
 
         if ruta_stl is not None:
@@ -188,6 +222,18 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
         )
 
         with gr.Row():
+            tiene_agujero = gr.Checkbox(label="Agregar agujero pasante", value=False)
+            diametro_agujero = gr.Textbox(
+                label="Diámetro del agujero (mm)", value="", visible=False
+            )
+
+        tiene_agujero.change(
+            fn=lambda chk: gr.update(visible=chk),
+            inputs=tiene_agujero,
+            outputs=diametro_agujero,
+        )
+
+        with gr.Row():
             vistas_iram = gr.Checkbox(
                 label="Vistas IRAM",
                 value=False,
@@ -210,7 +256,16 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         btn.click(
             fn=generar_con_visor,
-            inputs=[largo, ancho, alto, diametro, figura, vistas_iram],
+            inputs=[
+                largo,
+                ancho,
+                alto,
+                diametro,
+                figura,
+                vistas_iram,
+                tiene_agujero,
+                diametro_agujero,
+            ],
             outputs=[salida, visor, btn_stl, btn_step, btn_json],
         )
 
@@ -224,21 +279,32 @@ def crear_interfaz(conector_ia: Any = None) -> Any:
 
         def abrir_proyecto(archivo):
             if archivo is None:
-                return gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
+                return (
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                )
             params = cargar_proyecto_json(archivo.name)
             es_prisma = params["figura"] == "prisma_rectangular"
+            hay_agujero = params.get("tiene_agujero", False)
             return (
                 gr.update(value=params["figura"]),
                 gr.update(value=params["largo"], visible=es_prisma),
                 gr.update(value=params["ancho"], visible=es_prisma),
                 gr.update(value=params["alto"]),
                 gr.update(value=params["diametro"], visible=not es_prisma),
+                gr.update(value=hay_agujero),
+                gr.update(value=params.get("diametro_agujero", ""), visible=hay_agujero),
             )
 
         archivo_proyecto.change(
             fn=abrir_proyecto,
             inputs=archivo_proyecto,
-            outputs=[figura, largo, ancho, alto, diametro],
+            outputs=[figura, largo, ancho, alto, diametro, tiene_agujero, diametro_agujero],
         )
 
     return demo
