@@ -556,3 +556,72 @@ def test_make_viewer_html_usa_iframe_srcdoc(tmp_path):
         "El srcdoc debe incluir <base href='http://127.0.0.1:7860/'> "
         "para que las rutas /file=... resuelvan al servidor Gradio."
     )
+
+
+@pytest.mark.mvp
+def test_make_viewer_html_usa_urls_absolutas(tmp_path):
+    """T-190 | 001/FR-013 — make_viewer_html usa URLs absolutas para three.min.js.
+
+    Prueba: src/ui/visor.py::make_viewer_html
+
+    Las URLs relativas (/file=...) dentro del srcdoc solo se resuelven
+    correctamente si el iframe tiene allow-same-origin Y base href configurado.
+    Con URLs absolutas (http://127.0.0.1:7860/file=...) las scripts cargan
+    sin depender del contexto de base href y el comportamiento es predecible.
+    Requiere gr.set_static_paths() en app.py para autorizar los archivos.
+    """
+    from src.ui.visor import make_viewer_html
+
+    stl_fake = tmp_path / "figura.stl"
+    stl_fake.write_bytes(b"solid test\nendsolid test\n")
+
+    html = make_viewer_html(str(stl_fake))
+
+    # Las URLs de Three.js deben ser absolutas (http://127.0.0.1:7860/file=...)
+    assert "http://127.0.0.1:7860/file=" in html, (
+        "make_viewer_html debe usar URLs absolutas http://127.0.0.1:7860/file=... "
+        "para los archivos de Three.js. Las URLs relativas /file=... pueden fallar "
+        "en srcdoc cuando el iframe no resuelve la base correctamente."
+    )
+    # Los tres archivos de Three.js deben estar referenciados
+    assert "three.min.js" in html, "El srcdoc debe cargar three.min.js."
+    assert "STLLoader.js" in html, "El srcdoc debe cargar STLLoader.js."
+    assert "OrbitControls.js" in html, "El srcdoc debe cargar OrbitControls.js."
+
+
+@pytest.mark.mvp
+def test_iniciar_llama_set_static_paths():
+    """T-191 | 001/FR-013 — iniciar() registra src/ui/static con gr.set_static_paths.
+
+    Prueba: src/ui/app.py::iniciar
+
+    gr.set_static_paths() es el mecanismo oficial de Gradio para servir
+    archivos estaticos (Three.js, etc.) sin depender de allowed_paths,
+    cuya comparacion de rutas falla en Windows por backslashes vs forward-slashes.
+    Los archivos quedan accesibles en http://127.0.0.1:7860/file=<ruta_absoluta>.
+    """
+    from unittest.mock import patch, MagicMock
+
+    calls = []
+
+    def capture_set_static(paths):
+        calls.append(paths)
+
+    demo_mock = MagicMock()
+
+    with patch("gradio.set_static_paths", side_effect=capture_set_static):
+        with patch("src.ui.app.crear_interfaz", return_value=demo_mock):
+            from src.ui.app import iniciar
+
+            iniciar()
+
+    assert len(calls) >= 1, (
+        "iniciar() debe llamar a gr.set_static_paths() para registrar "
+        "los archivos estaticos de Three.js antes de lanzar la app."
+    )
+    # Verificar que el path estatico apunta a src/ui/static
+    paths_str = str(calls[0])
+    assert "static" in paths_str.lower(), (
+        f"gr.set_static_paths debe recibir el directorio src/ui/static, "
+        f"pero se paso: {calls[0]}"
+    )
