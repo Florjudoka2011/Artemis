@@ -6,13 +6,13 @@ Función pura; sin efectos secundarios.
 
 import cadquery as cq
 
-from src.schemas.figuras import CilindroParams
+from src.schemas.figuras import CilindroParams, TipoAgujero
 
 
 def construir(params: CilindroParams) -> cq.Workplane:
     """Construye el cilindro a partir de parámetros validados.
 
-    Convención: zmin=0 (T-198). Agujero coaxial pasante (T-11..T-14).
+    Convención: zmin=0 (T-198). Agujero coaxial pasante o ciego (T-11..T-14, T-23..T-24).
     """
     if params.agujero is not None and params.agujero.diametro >= params.diametro:
         raise ValueError(
@@ -28,8 +28,20 @@ def construir(params: CilindroParams) -> cq.Workplane:
     )
 
     if params.agujero is not None:
-        radio = params.agujero.diametro / 2
-        # Agujero coaxial: taladro vertical desde cara superior
-        solido = solido.faces(">Z").workplane().circle(radio).cutThruAll()
+        ag = params.agujero
+        radio = ag.diametro / 2
+
+        if ag.tipo == TipoAgujero.ciego and ag.profundidad >= params.alto:
+            raise ValueError(
+                f"Profundidad del agujero ciego ({ag.profundidad}) debe ser < "
+                f"alto del cilindro ({params.alto})"
+            )
+
+        wp = solido.faces(">Z").workplane().circle(radio)
+
+        if ag.tipo == TipoAgujero.pasante:
+            solido = wp.cutThruAll()
+        else:
+            solido = wp.cutBlind(-ag.profundidad)
 
     return solido

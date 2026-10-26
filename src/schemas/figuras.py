@@ -10,7 +10,7 @@ import math
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 
 class FiguraTipo(str, Enum):
@@ -27,13 +27,20 @@ class CaraAgujero(str, Enum):
     lateral_der = "lateral_der"
 
 
+class TipoAgujero(str, Enum):
+    pasante = "pasante"
+    ciego = "ciego"
+
+
 class AgujeroParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     diametro: float
     cara: CaraAgujero
-    offset_x: float = 0.0
-    offset_y: float = 0.0
+    tipo: TipoAgujero = TipoAgujero.pasante
+    u: float = 0.0
+    v: float = 0.0
+    profundidad: Optional[float] = None
 
     @field_validator("diametro")
     @classmethod
@@ -43,6 +50,24 @@ class AgujeroParams(BaseModel):
         if v <= 0:
             raise ValueError("diametro debe ser > 0")
         return v
+
+    @field_validator("profundidad")
+    @classmethod
+    def profundidad_positiva(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None:
+            if not math.isfinite(v):
+                raise ValueError("profundidad debe ser un número finito")
+            if v <= 0:
+                raise ValueError("profundidad debe ser > 0")
+        return v
+
+    @model_validator(mode="after")
+    def validar_ciego_requiere_profundidad(self) -> "AgujeroParams":
+        if self.tipo == TipoAgujero.ciego and self.profundidad is None:
+            raise ValueError("tipo 'ciego' requiere profundidad > 0")
+        if self.tipo == TipoAgujero.pasante and self.profundidad is not None:
+            raise ValueError("tipo 'pasante' no debe tener profundidad")
+        return self
 
 
 class PrismaRectangularParams(BaseModel):

@@ -6,16 +6,29 @@ Función pura; sin efectos secundarios.
 
 import cadquery as cq
 
-from src.schemas.figuras import CaraAgujero, PrismaRectangularParams
+from src.schemas.figuras import CaraAgujero, PrismaRectangularParams, TipoAgujero
 
-# Dimensiones mínimas de la cara para cada cara del prisma
+# Dimensiones de la cara: (half_u, half_v, espesor) para cada cara
+# u y v son los ejes del plano de la cara; espesor es la profundidad máxima de agujero ciego.
+# Para cara superior/inferior: u → X (largo/2), v → Y (ancho/2), espesor = alto
+# Para cara frontal/trasera:   u → X (largo/2), v → Z (alto/2),  espesor = ancho
+# Para cara lateral_izq/der:   u → Y (ancho/2), v → Z (alto/2),  espesor = largo
 _CARA_DIMENSIONES = {
-    CaraAgujero.superior: lambda p: min(p.largo, p.ancho),
-    CaraAgujero.inferior: lambda p: min(p.largo, p.ancho),
-    CaraAgujero.frontal: lambda p: min(p.ancho, p.alto),
-    CaraAgujero.trasera: lambda p: min(p.ancho, p.alto),
-    CaraAgujero.lateral_izq: lambda p: min(p.largo, p.alto),
-    CaraAgujero.lateral_der: lambda p: min(p.largo, p.alto),
+    CaraAgujero.superior: lambda p: (p.largo / 2, p.ancho / 2, p.alto),
+    CaraAgujero.inferior: lambda p: (p.largo / 2, p.ancho / 2, p.alto),
+    CaraAgujero.frontal: lambda p: (p.largo / 2, p.alto / 2, p.ancho),
+    CaraAgujero.trasera: lambda p: (p.largo / 2, p.alto / 2, p.ancho),
+    CaraAgujero.lateral_izq: lambda p: (p.ancho / 2, p.alto / 2, p.largo),
+    CaraAgujero.lateral_der: lambda p: (p.ancho / 2, p.alto / 2, p.largo),
+}
+
+_CARA_SELECTOR = {
+    CaraAgujero.superior: ">Z",
+    CaraAgujero.inferior: "<Z",
+    CaraAgujero.frontal: ">Y",
+    CaraAgujero.trasera: "<Y",
+    CaraAgujero.lateral_izq: "<X",
+    CaraAgujero.lateral_der: ">X",
 }
 
 
@@ -23,36 +36,50 @@ def construir(params: PrismaRectangularParams) -> cq.Workplane:
     """Construye el prisma rectangular a partir de parámetros validados.
 
     Convención: zmin=0, centrado en X e Y (T-197).
-    Agujero pasante: valida diámetro < lado menor de la cara (T-05/T-07).
+    Agujero pasante/ciego con posición u, v y validación de límites (T-09/T-18/T-19).
     """
-    # centered=(True, True, False): centrado en X e Y, zmin=0 (convención T-197)
     solido = cq.Workplane("XY").box(
         params.largo, params.ancho, params.alto, centered=(True, True, False)
     )
 
-    if params.agujero is not None:
-        agujero = params.agujero
-        lado_menor = _CARA_DIMENSIONES[agujero.cara](params)
-        if agujero.diametro >= lado_menor:
-            raise ValueError(
-                f"Diámetro del agujero ({agujero.diametro}) debe ser < "
-                f"lado menor de la cara '{agujero.cara.value}' ({lado_menor})"
-            )
+    if params.agujero is None:
+        return solido
 
-        radio = agujero.diametro / 2
-        cara = agujero.cara
-        ox, oy = agujero.offset_x, agujero.offset_y
+    ag = params.agujero
+    half_u, half_v, espesor = _CARA_DIMENSIONES[ag.cara](params)
+    radio = ag.diametro / 2
 
-        if cara in (CaraAgujero.superior, CaraAgujero.inferior):
-            # Taladro vertical (eje Z): desde la cara superior
-            solido = solido.faces(">Z").workplane().center(ox, oy).circle(radio).cutThruAll()
-        elif cara in (CaraAgujero.frontal, CaraAgujero.trasera):
-            # Taladro en Y
-            direction = ">Y" if cara == CaraAgujero.frontal else "<Y"
-            solido = solido.faces(direction).workplane().center(ox, oy).circle(radio).cutThruAll()
-        else:
-            # Taladro en X (lateral_izq / lateral_der)
-            direction = "<X" if cara == CaraAgujero.lateral_izq else ">X"
-            solido = solido.faces(direction).workplane().center(ox, oy).circle(radio).cutThruAll()
+    # Validación diámetro vs cara (legado T-05/T-07): diámetro < min(2*half_u, 2*half_v)
+    lado_menor = min(half_u, half_v) * 2
+    if ag.diametro >= lado_menor:
+        raise ValueError(
+            f"Diámetro del agujero ({ag.diametro}) debe ser < "
+            f"lado menor de la cara '{ag.cara.value}' ({lado_menor})"
+        )
+
+    # Validación posición: el agujero debe quedar completamente dentro de la cara (T-09)
+    exceso_u = abs(ag.u) + radio - half_u
+    exceso_v = abs(ag.v) + radio - half_v
+    if exceso_u >= 0 or exceso_v >= 0:
+        exceso = max(exceso_u, exceso_v)
+        eje = "u" if exceso_u >= exceso_v else "v"
+        raise ValueError(
+            f"Agujero fuera de la cara '{ag.cara.value}': excede {exceso:.3f} mm en eje {eje}"
+        )
+
+    # Validación profundidad (agujero ciego, T-21)
+    if ag.tipo == TipoAgujero.ciego and ag.profundidad >= espesor:
+        raise ValueError(
+            f"Profundidad del agujero ciego ({ag.profundidad}) debe ser < "
+            f"espesor de la pieza en esa dirección ({espesor})"
+        )
+
+    selector = _CARA_SELECTOR[ag.cara]
+    wp = solido.faces(selector).workplane().center(ag.u, ag.v).circle(radio)
+
+    if ag.tipo == TipoAgujero.pasante:
+        solido = wp.cutThruAll()
+    else:
+        solido = wp.cutBlind(-ag.profundidad)
 
     return solido
